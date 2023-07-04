@@ -1,0 +1,5 @@
+"SNP" "CHR" "POS" "EA_exposure" "EA_outcome" "OA_exposure" "OA_outcome" "EAF_exposure" "EAF_outcome" "SE_exposure" "SE_outcome" "PVAL_exposure" "PVAL_outcome"
+"1" "rs12646525" 4 120502461 "T" "T" "C" "C" 0.22 NA 0.04 0.02 "7.4e-07" 0.9944
+"2" "rs17355550" 4 120416096 "T" "T" "C" "C" 0.97 NA 0.09 0.05 "4.2e-07" 0.05273
+"3" "rs7672519" 4 120544112 "T" "T" "C" "C" 0.48 NA 0.03 0.02 "9.7e-11" 0.4481
+"4" "rs80223330" 4 120423094 "A" "A" "G" "G" 0.14 NA 0.05 0.03 "8.4e-03" 0.1995
