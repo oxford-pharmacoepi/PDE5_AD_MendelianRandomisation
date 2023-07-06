@@ -1,5 +1,5 @@
 rm(list = ls())
-pacman::p_load('readr','devtools','dplyr','TwoSampleMR','LDlinkR','forestplot')
+pacman::p_load('readr','devtools','dplyr','TwoSampleMR','LDlinkR','forestplot','tidyr')
 devtools::install_github("bar-woolf/TwoStepCisMR")
 library(TwoStepCisMR)
 pathToData <- 'C:/Users/martaa/Desktop/Projects/PDE5_AD_MendelianRandomisation/'
@@ -132,36 +132,50 @@ write.csv(t, 'mr_results_twoStep.csv')
 
 
 # Colocalization
-chr<-4
+chr <- 4
 window <- 0 #using a more stringent window for the anlysis. 
-gene_start<-120415550#119494395#
-gene_end<-120550146#119628991#
+gene_start <- 120415550#119494395#
+gene_end <- 120550146#119628991#
 chrpos <- paste0(chr, ":", gene_start - window, "-", gene_end + window)
 
-sbp_dbp <- gwasglue::ieugwasr_to_coloc(id1='ieu-b-38', id2='ieu-b-39', chrompos=chrpos)
+dbp <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_DBP.txt.gz'))) %>%
+    separate(MarkerName, into=c('chr','pos','Type'), sep =':') %>%
+    mutate(pos = as.numeric(pos)) %>%
+  filter(pos > gene_start-window & pos < gene_end+window & chr == chr) 
 
-sbp<-as.data.frame(sbp_dbp$dataset1)
-dsbp<-as.data.frame(sbp_dbp$dataset2)
+sbp <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_SBP.txt.gz'))) %>%
+  separate(MarkerName, into=c('chr','pos','Type'), sep =':') %>%
+  mutate(pos = as.numeric(pos)) %>%
+  right_join(dbp %>% select(chr, pos), by = c('chr','pos'))
+  
+alz <- as_tibble(read_table(paste0(pathToData,'GWAS/AlzD_Lambert_IGAP_2013/IGAP_summary_statistics/IGAP_stage_1.txt'))) %>%
+  rename('chr' = 'Chromosome', 'pos' = 'Position') %>%
+  right_join(dbp %>% mutate(chr = as.numeric(chr)) %>% select(chr, pos), by = c('chr','pos'))
 
-sbp_kids <- gwasglue::ieugwasr_to_coloc(id1='ieu-b-38', id2='ieu-a-297', chrompos=chrpos)
-kids<-as.data.frame(sbp_kids$dataset2)
+# Prove that all gwas have same length -> same number of snps
+nrow(dbp) == nrow(sbp)
+nrow(sbp) == nrow(alz)
 
-res3 <- coloc::coloc.abf(sbp_kids[[2]], sbp_dbp[[2]])#dsbp
-res3
-res4 <- coloc::coloc.abf(sbp_kids[[2]], sbp_dbp[[1]])#sbp
-res4
-
-install_github("jrs95/hyprcoloc", build_opts = c("--resave-data", "--no-manual"), build_vignettes = TRUE)
 library(hyprcoloc)
+hyper <- dbp %>% select(chr, pos, Beta_dbp = Effect, se_dbp = StdErr, p_dbp=DBP, maf_dbp = Freq1) %>%
+  left_join(sbp %>% select(chr, pos, beta_sbp = Effect, se_sbp = StdErr, p_sbp=DBP, maf_sbp = Freq1), by = c('chr','pos')) %>%
+  left_join(alz %>% select(chr,pos,snp=MarkerName, beta_alz = Beta, se_alz = SE, p_alz = Pvalue) %>% mutate(maf = 0.5), by = c('chr','pos'))
 
-hyper<-merge(dsbp,sbp %>% mutate(se_sbp = varbeta/sqrt(N)) %>%
+hyper<-merge(dsbp %>% 
+               mutate(se_dbp = varbeta) %>%
+               select("snp","beta_dbp" = "beta","se_dbp","pvalues_dbp" = pvalues),
+             sbp %>% mutate(se_sbp = varbeta) %>%
                select("snp","beta_sbp" = "beta","se_sbp","pvalues_sbp" = pvalues),by="snp")
 hyper<-merge(hyper,kids %>%
-               mutate(se_kids= varbeta/sqrt(N)) %>%
+               mutate(se_kids= varbeta) %>%
                select("snp","beta_kids" = "beta","se_kids","pvalues_kids" = pvalues),by="snp")
 
 betas <- as.matrix(hyper[,grepl("beta_", names(hyper))])
 ses <- as.matrix(hyper[,grepl("se_", names(hyper))])
-hyprcoloc_results <- hyprcoloc::hyprcoloc(betas, ses, trait.names = c("sbp", "dsbp","number of childern fathered" ), snp.id = hyper$snp,
-                                          binary.outcomes = c(0, 0, 0,0), 
+hyprcoloc_results <- hyprcoloc::hyprcoloc(effect.est = betas,
+                                          effect.se = ses,
+                                          trait.names = c("sbp", "dsbp","number of childern fathered" ),
+                                          snp.id = hyper$snp,
+                                          binary.outcomes = c(0, 1), 
                                           prior.1 = 1e-04, prior.c = 0.02)
+hyprcoloc_results$results
