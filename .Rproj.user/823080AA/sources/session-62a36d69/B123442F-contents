@@ -10,6 +10,8 @@ se   <- numeric()
 cu   <- numeric()
 cl   <- numeric()
 j <- 1
+
+
 for (i in c('DBP','SBP')){
   # Snp - exposure
   exp <- read.table(paste0('iv_',i,'.txt')) %>%
@@ -155,24 +157,77 @@ gene_start <- 120415550#119494395#
 gene_end <- 120550146#119628991#
 chrpos <- paste0(chr, ":", gene_start - window, "-", gene_end + window)
 
-alz <- as_tibble(read_table(paste0(pathToData,'GWAS/AlzD_Lambert_IGAP_2013/IGAP_summary_statistics/IGAP_stage_1.txt'))) %>%
-  rename('chr' = 'Chromosome', 'pos' = 'Position') %>%
-  right_join(dbp %>% mutate(chr = as.numeric(chr)) %>% select(chr, pos), by = c('chr','pos'))
+dbp <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_DBP.txt.gz'))) %>%
+    separate(MarkerName, into=c('chr','pos','Type'), sep =':') %>%
+    mutate(pos = as.numeric(pos)) %>%
+    mutate(chr = as.numeric(chr))
+sbp <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_SBP.txt.gz'))) %>%
+  separate(MarkerName, into=c('chr','pos','Type'), sep =':') %>%
+  mutate(pos = as.numeric(pos)) %>%
+  mutate(chr = as.numeric(chr))
+alz <- as_tibble(read_table(paste0(pathToData,'GWAS/AlzD_Lambert_IGAP_2013/IGAP_summary_statistics/IGAP_stage_1.txt')))
 
-# Prove that all gwas have same length -> same number of snps
-nrow(dbp) == nrow(sbp)
-nrow(sbp) == nrow(alz)
+dbp_chr <- dbp %>%
+  filter(chr == 4 & pos >= gene_start-window & pos <= gene_end+window) %>%
+  left_join(
+    alz %>% select(snp = MarkerName, pos = Position, chr = Chromosome),
+    by = c('pos','chr')
+  ) %>%
+  filter(!is.na(snp))
 
+sbp_chr <- sbp %>%
+  filter(chr == 4 & pos >= gene_start-window & pos <= gene_end+window) %>%
+  left_join(
+    alz %>% select(snp = MarkerName, pos = Position, chr = Chromosome),
+    by = c('pos','chr')
+  ) %>%
+  filter(!is.na(snp))
 
-sbp_dbp <- gwasglue::ieugwasr_to_coloc(id1='ieu-b-38', id2='ieu-b-39', chrompos=chrpos)
-sbp     <- sbp_dbp$dataset1
-dbp     <- sbp_dbp$dataset2
+alz_dbp <- alz %>% 
+  right_join(dbp_chr %>% select(MarkerName = snp))
 
-sbp_alz <- gwasglue::ieugwasr_to_coloc(id1='ieu-b-38', id2='ieu-a-297', chrompos=chrpos)
-alz     <- sbp_alz$dataset2
-alz$type <- 'cc'
+alz_sbp <- alz %>%
+  right_join(sbp_chr %>% select(MarkerName = snp))
 
-res3 <- coloc::coloc.abf(alz, dbp)#dsbp
-res3
-res4 <- coloc::coloc.abf(alz, sbp)#sbp
-res4
+dbp_list <- list(
+  beta = dbp_chr$Effect,
+  MAF  = dbp_chr$Freq1,
+  pvalues = dbp_chr$P,
+  varbeta = dbp_chr$StdErr^2,
+  snp = dbp_chr$snp,
+  N = dbp_chr$TotalSampleSize,
+  type = 'quant',
+  pos = dbp_chr$pos)
+
+alz_list <- list(
+  beta = alz_dbp$Beta,
+  pvalues = alz_dbp$Pvalue,
+  varbeta = alz_dbp$SE^2,
+  snp = alz_dbp$MarkerName,
+  type = 'cc',
+  pos = alz_dbp$Position
+)
+
+res3 <- coloc::coloc.abf(dbp_list,alz_list)
+
+sbp_list <- list(
+  beta = sbp_chr$Effect,
+  MAF  = sbp_chr$Freq1,
+  pvalues = sbp_chr$P,
+  varbeta = sbp_chr$StdErr^2,
+  snp = sbp_chr$snp,
+  N = sbp_chr$TotalSampleSize,
+  type = 'quant',
+  pos = sbp_chr$pos)
+
+alz_list <- list(
+  beta = alz_sbp$Beta,
+  pvalues = alz_sbp$Pvalue,
+  varbeta = alz_sbp$SE^2,
+  snp = alz_sbp$MarkerName,
+  type = 'cc',
+  pos = alz_sbp$Position
+)
+
+res4 <- coloc::coloc.abf(sbp_list,alz_list)
+

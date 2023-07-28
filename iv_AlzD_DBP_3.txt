@@ -1,0 +1,6 @@
+"chr" "pos" "effect_allele" "other_allele" "beta" "se" "pval" "eaf" "SNP" "outcome" "mr_keep" "pval_origin" "id"
+"1" "4" "120416096" "T" "C" -5.82383e-05 0.000123936 0.638422 0.9689014 "rs17355550" "outcome" TRUE "reported" "outcome"
+"2" "4" "120423094" "G" "A" 1.1565e-05 6.2767e-05 0.853816 0.862407 "rs80223330" "outcome" TRUE "reported" "outcome"
+"3" "4" "120502461" "T" "C" 3.02159e-05 5.20995e-05 0.561938 0.214642 "rs12646525" "outcome" TRUE "reported" "outcome"
+"4" "4" "120509279" "T" "C" -4.441e-05 4.30728e-05 0.30252 0.526713 "rs66887589" "outcome" TRUE "reported" "outcome"
+"5" "4" "120532085" "T" "C" 7.85609e-05 4.53977e-05 0.0835414 0.658491 "rs10050092" "outcome" TRUE "reported" "outcome"
