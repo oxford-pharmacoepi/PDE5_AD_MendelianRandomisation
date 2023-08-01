@@ -100,7 +100,7 @@ for i = 1:2
     ylim([0.5,6.5-i])
     xlim([-.5,0.75])
     title([names1{i} ' blood pressure']);
-    xlabel('Effect size [mmHg] / Effect size [log(OR)]')
+    xlabel('Effect size [mmHg]')
     l = legend('IV-Blood pressure','IV-AlzD (Lambert)', 'IV-AlzD (Wightman)','Location','Northoutside','NumColumns',2);
     print(f,['./Figures/Instruments_' names{i} '.png'],'-r300','-dpng')
 end

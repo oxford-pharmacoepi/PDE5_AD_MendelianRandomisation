@@ -2,23 +2,25 @@ rm(list = ls())
 pacman::p_load('readr','devtools','dplyr','TwoSampleMR','LDlinkR','forestplot','tidyr')
 devtools::install_github("bar-woolf/TwoStepCisMR")
 library(TwoStepCisMR)
-pathToData <- 'C:/Users/martaa/Desktop/Projects/PDE5_AD_MendelianRandomisation/'
+pathToData <- 'C:/Users/marta/Desktop/PDE5_AD_MendelianRandomisation/'
 
 # Mendelian randomisation ------------------------------------------------------
 beta <- numeric()
+beta_s <- numeric()
 se   <- numeric()
 cu   <- numeric()
 cl   <- numeric()
 j <- 1
 
-
+dec <- c(-5.5,-8.4)
 for (i in c('DBP','SBP')){
   # Snp - exposure
   exp <- read.table(paste0('iv_',i,'.txt')) %>%
     mutate(id.exposure = 'exposure',
            exposure = 'exposure') %>%
     rename(beta.exposure = beta, se.exposure = se, effect_allele.exposure = effect_allele,
-           other_allele.exposure = other_allele, eaf.exposure = eaf)
+           other_allele.exposure = other_allele, eaf.exposure = eaf) %>%
+    mutate(beta.exposure = beta.exposure)
   # Snp - outcome
   out <- read.table(paste0('iv_AlzD_',i,'.txt')) %>%
     mutate(id.outcome = 'outcome',
@@ -32,16 +34,16 @@ for (i in c('DBP','SBP')){
   res <- as.data.frame(IVWcorrel(betaYG = dat$beta.outcome,  sebetaYG = dat$se.outcome,
                                  betaXG = dat$beta.exposure, sebetaXG = dat$se.exposure,
                                  rho = ld_matrix(dat$SNP)))
-  
-  beta[j] <- exp(res$beta_IVWcorrel)
-  se[j] <- res$se_IVWcorrel.random
-  cu[j] <- exp(res$beta_IVWcorrel + 1.96*res$se_IVWcorrel.random)
-  cl[j] <- exp(res$beta_IVWcorrel - 1.96*res$se_IVWcorrel.random)
+
+  beta[j]   <- exp(res$beta_IVWcorrel*dec[j]) 
+  se[j] <- res$se_IVWcorrel.random*dec[j]
+  cl[j] <- exp(dec[j]*(res$beta_IVWcorrel + 1.96*res$se_IVWcorrel.random))
+  cu[j] <- exp(dec[j]*(res$beta_IVWcorrel - 1.96*res$se_IVWcorrel.random))
   j <- j + 1
 }
 
 t <- data.frame(OR = beta, SE = se, upper = cu, lower = cl, Exposure = c('Diastolic blood pressure','Systolic blood pressure'))
-write.csv(t, 'mr_results.csv')
+write.csv(t, 'mr_results_scaled.csv')
 
 
 #Two-step MR -------------------------------------------------------------------
@@ -50,6 +52,7 @@ se   <- numeric()
 cu   <- numeric()
 cl   <- numeric()
 num <- 1
+ex  <- 1
 i <- c("ukb-b-19953", # BMI
        'ukb-b-7376', # Impedance of leg (right)
        'ukb-b-14068', # Impedance of leg (left)  
@@ -65,8 +68,6 @@ i <- c("ukb-b-19953", # BMI
        'ebi-a-GCST004614', # Granulocyte count
        'ebi-a-GCST004620') # Sum basophil neutrophil counts
 
-k <- 'ieu-a-297' # Alzheimer
-
 for(j in c('DBP','SBP')){
   for (jj in i){
     # Snp - exposure 
@@ -74,7 +75,8 @@ for(j in c('DBP','SBP')){
       mutate(id.exposure = 'exposure',
              exposure = 'exposure') %>%
       rename(beta.exposure = beta, se.exposure = se, effect_allele.exposure = effect_allele,
-             other_allele.exposure = other_allele, eaf.exposure = eaf, pval.exposure = pval)
+             other_allele.exposure = other_allele, eaf.exposure = eaf, pval.exposure = pval) %>%
+      mutate(beta.exposure = beta.exposure)
     # Snp - confounder
     conf <- extract_outcome_data(exp$SNP, jj, proxies = F)
     conf <- harmonise_data(exp,conf)
@@ -135,18 +137,19 @@ for(j in c('DBP','SBP')){
                      sebetaXG = out$se.exposure,
                      rho = ld_matrix(out$SNP))
     
-    IVW <- data.frame(IVW)  
+    IVW <- data.frame(IVW)
     
-    beta[num] <- exp(IVW$beta_IVWcorrel)
+    beta[num] <- exp(IVW$beta_IVWcorrel*dec[ex])
     se[num]   <- IVW$se_IVWcorrel.random
-    cu[num]   <- exp(IVW$beta_IVWcorrel+1.96*IVW$se_IVWcorrel.random)
-    cl[num]   <- exp(IVW$beta_IVWcorrel-1.96*IVW$se_IVWcorrel.random)
+    cl[num]   <- exp(dec[ex]*(IVW$beta_IVWcorrel+1.96*IVW$se_IVWcorrel.random))
+    cu[num]   <- exp(dec[ex]*(IVW$beta_IVWcorrel-1.96*IVW$se_IVWcorrel.random))
     
     num <- num + 1
   }
   
   t <- data.frame(i,OR = beta, SE = se, upper = cu, lower = cl)
-  write.csv(t, paste0('mr_results_twoStep_',j,'.csv'))
+  write.csv(t, paste0('mr_results_twoStep_',j,'_scaled.csv'))
+  ex <- ex+1
 }
 
 

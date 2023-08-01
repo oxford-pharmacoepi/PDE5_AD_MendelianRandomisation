@@ -2,9 +2,11 @@ rm(list = ls())
 pacman::p_load('readr','devtools','dplyr','TwoSampleMR','LDlinkR','forestplot','tidyr')
 devtools::install_github("bar-woolf/TwoStepCisMR")
 library(TwoStepCisMR)
-pathToData <- 'C:/Users/martaa/Desktop/Projects/PDE5_AD_MendelianRandomisation/'
+pathToData <- 'C:/Users/marta/Desktop/Projects/PDE5_AD_MendelianRandomisation'
 
-for(num_gwas in c(2,3)){
+dec <- c(-5.5,-8.4)
+
+for(num_gwas in c(2)){
   # Mendelian randomisation ------------------------------------------------------
   beta <- numeric()
   se   <- numeric()
@@ -33,16 +35,16 @@ for(num_gwas in c(2,3)){
                                    betaXG = dat$beta.exposure, sebetaXG = dat$se.exposure,
                                    rho = ld_matrix(dat$SNP)))
     
-    beta[j] <- exp(res$beta_IVWcorrel)
+    beta[j] <- exp(res$beta_IVWcorrel*dec[j])
     se[j] <- res$se_IVWcorrel.random
-    cu[j] <- exp(res$beta_IVWcorrel + 1.96*res$se_IVWcorrel.random)
     p[j]  <- res$p_IVWcorrel.random
-    cl[j] <- exp(res$beta_IVWcorrel - 1.96*res$se_IVWcorrel.random)
+    cl[j] <- exp(dec[j]*(res$beta_IVWcorrel + 1.96*res$se_IVWcorrel.random))
+    cu[j] <- exp(dec[j]*(res$beta_IVWcorrel - 1.96*res$se_IVWcorrel.random))
     j <- j + 1
   }
   
   t <- data.frame(OR = beta, SE = se, upper = cu, lower = cl, p = p,Exposure = c('Diastolic blood pressure','Systolic blood pressure'))
-  write.csv(t,paste0('mr_results_',num_gwas,'.csv'))
+  write.csv(t,paste0('mr_results_',num_gwas,'_scaled.csv'))
 }
 
 #Two-step MR -------------------------------------------------------------------

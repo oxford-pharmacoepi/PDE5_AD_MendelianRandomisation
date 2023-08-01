@@ -4,7 +4,7 @@ pacman::p_load('dplyr','readr','here','stringr','tidyr','TwoSampleMR',
 
 
 ## Read gwas -------------------------------------------------------------------
-pathToData <- 'C:/Users/martaa/Desktop/Projects/PDE5_AD_MendelianRandomisation/'
+pathToData <- 'C:/Users/marta/Desktop/PDE5_AD_MendelianRandomisation/'
 
 # Diastolic blood pressure 
 # gwasDBP <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_DBP.txt.gz'))) %>%
@@ -223,6 +223,7 @@ c <- harmonise_data(iv_DBP,iv_Alz_DBP) %>%
             'SE_outcome'  = round(se.outcome, digits = 2),
             'PVAL_exposure' = formatC(pval.exposure, format = "e", digits = 1),
             'PVAL_outcome' = pval.outcome) 
+write.table(c, 'DBP_AlzD_harmonised_2.txt')
 c <- c %>%
   flextable() %>%
   span_header(sep = "_") %>%
@@ -284,6 +285,7 @@ d <- harmonise_data(iv_SBP,iv_Alz_SBP) %>%
             'SE_outcome'  = round(se.outcome, digits = 2),
             'PVAL_exposure' = formatC(pval.exposure, format = "e", digits = 1),
             'PVAL_outcome' = pval.outcome) 
+write.table(d, 'SBP_AlzD_harmonised_2.txt')
 d <- d %>%
   flextable() %>%
   span_header(sep = "_") %>%
