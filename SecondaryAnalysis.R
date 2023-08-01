@@ -2,11 +2,11 @@ rm(list = ls())
 pacman::p_load('readr','devtools','dplyr','TwoSampleMR','LDlinkR','forestplot','tidyr')
 devtools::install_github("bar-woolf/TwoStepCisMR")
 library(TwoStepCisMR)
-pathToData <- 'C:/Users/marta/Desktop/Projects/PDE5_AD_MendelianRandomisation'
+pathToData <- 'C:/Users/marta/Desktop/PDE5_AD_MendelianRandomisation/'
 
 dec <- c(-5.5,-8.4)
-
-for(num_gwas in c(2)){
+dec <- c(1,1)
+for(num_gwas in c(3)){
   # Mendelian randomisation ------------------------------------------------------
   beta <- numeric()
   se   <- numeric()
@@ -44,7 +44,7 @@ for(num_gwas in c(2)){
   }
   
   t <- data.frame(OR = beta, SE = se, upper = cu, lower = cl, p = p,Exposure = c('Diastolic blood pressure','Systolic blood pressure'))
-  write.csv(t,paste0('mr_results_',num_gwas,'_scaled.csv'))
+  write.csv(t,paste0('mr_results_',num_gwas,'.csv'))
 }
 
 #Two-step MR -------------------------------------------------------------------
@@ -65,13 +65,13 @@ i <- c("ukb-b-19953", # BMI
 
 ptd <- c('AlzD_Lambert_IGAP_2013/IGAP_summary_statistics/IGAP_stage_1.txt',
          'AlzD_wightman_2021_excluding_23andme/PGCALZ2ExcludingUKBand23andME_METALInverseVariance_MetaAnalysis.txt.gz',
-         'AlzD_Bellenguez_2022/GCST90027158_buildGRCh38.tsv.gz')
+         'AlzD_deRojas_2021/Sumstats_SPIGAPUK2_20190625/Sumstats_SPIGAPUK2_20190625.txt')
 beta <- numeric()
 se   <- numeric()
 cu   <- numeric()
 cl   <- numeric()
 num <- 1
-for(num_gwas in c(2,3)){
+for(num_gwas in c(3)){
   for(j in c('DBP','SBP')){
     for (jj in i){
       # Snp - exposure 
@@ -83,6 +83,10 @@ for(num_gwas in c(2,3)){
       # Snp - confounder
       conf <- extract_outcome_data(exp$SNP, jj, proxies = F)
       conf <- harmonise_data(exp,conf)
+      
+      if (length(conf$SNP) != length(exp$snp)){
+        exp <- exp %>% filter(SNP %in% conf$SNP)
+      }
       
       # Snp - outcome
       out <- read.table(paste0('iv_AlzD_',j,'_',num_gwas,'.txt')) %>%
@@ -105,17 +109,15 @@ for(num_gwas in c(2,3)){
                                               force_server = FALSE)
       # - Confounder instruments on the outcome
       out_conf_instruments <- as_tibble(read_table(paste0(pathToData,'GWAS/',ptd[num_gwas]))) 
+      
       if(num_gwas == 3){
         out_conf_instruments <- out_conf_instruments %>% 
-          filter(variant_id %in% conf_instruments$SNP) %>%
-          rename(SNP = variant_id,
-                 effect_allele.outcome = effect_allele,
-                 other_allele.outcome = other_allele,
-                 beta.outcome = beta,
-                 se.outcome = standard_error,
-                 pvalue.outcome = p_value,
-                 eaf.outcome = effect_allele_frequency) %>%
-          mutate(id.outcome = 'AD', outcome = 'AD')
+          filter(RS %in% conf_instruments$SNP) %>%
+          select(SNP = RS,
+                 chr = CHR,
+                 effect_allele.outcome = A1, other_allele.outcome = A2,
+                 beta.outcome = Beta, se.outcome = SE, pval.outcome = P) %>%
+          mutate(eaf.outcome = NA, id.outcome = 'AD', outcome = 'AD')
       }else if(num_gwas == 2){
         out_conf_instruments <- out_conf_instruments %>% 
           right_join(conf_instruments %>% 
@@ -185,3 +187,106 @@ for(num_gwas in c(2,3)){
     num <- 1
   }
 }
+
+
+
+# Colocalization ---------------------------------------------------------------
+chr <- 4
+window <- 0 #using a more stringent window for the anlysis. 
+gene_start <- 120415550#119494395#
+gene_end <- 120550146#119628991#
+chrpos <- paste0(chr, ":", gene_start - window, "-", gene_end + window)
+
+dbp <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_DBP.txt.gz'))) %>%
+  separate(MarkerName, into=c('chr','pos','Type'), sep =':') %>%
+  mutate(pos = as.numeric(pos)) %>%
+  mutate(chr = as.numeric(chr))
+sbp <- as_tibble(read_table(paste0(pathToData,'GWAS/BP_Evangelou_2018/Evangelou_30224653_SBP.txt.gz'))) %>%
+  separate(MarkerName, into=c('chr','pos','Type'), sep =':') %>%
+  mutate(pos = as.numeric(pos)) %>%
+  mutate(chr = as.numeric(chr))
+
+# WIGHTMAN ---------------------------------------------------------------------
+  alz <- as_tibble(read_table(paste0(pathToData,'GWAS/AlzD_wightman_2021_excluding_23andme/PGCALZ2ExcludingUKBand23andME_METALInverseVariance_MetaAnalysis.txt.gz')))
+  dbp_chr <- dbp %>%
+    filter(chr == 4 & pos >= gene_start-window & pos <= gene_end+window) %>%
+    left_join(
+      alz %>% select(pos = base_pair_location, chr = chromosome),
+      by = c('pos','chr')
+    )
+  
+  sbp_chr <- sbp %>%
+    filter(chr == 4 & pos >= gene_start-window & pos <= gene_end+window) %>%
+    left_join(
+      alz %>% select(pos = base_pair_location, chr = chromosome),
+      by = c('pos','chr')
+    )
+  
+  alz_dbp <- alz %>% 
+    right_join(dbp_chr %>% select(chromosome = chr, base_pair_location = pos))
+  
+  alz_sbp <- alz %>%
+    right_join(sbp_chr %>% select(chromosome = chr, base_pair_location = pos))
+  
+  dbp_chr <- dbp_chr %>%
+    mutate(snp = paste0(dbp_chr$chr,':',dbp_chr$pos)) %>%
+    unique()
+  dbp_list <- list(
+    beta = dbp_chr$Effect,
+    MAF  = dbp_chr$Freq1,
+    pvalues = dbp_chr$P,
+    varbeta = dbp_chr$StdErr^2,
+    N = dbp_chr$TotalSampleSize,
+    type = 'quant',
+    pos = dbp_chr$pos,
+    chr = dbp_chr$chr,
+    snp = dbp_chr$snp)
+  
+  alz_dbp <- alz_dbp %>%
+    mutate(snp = paste0(alz_dbp$chromosome,':',alz_dbp$base_pair_location)) %>%
+    unique()
+  
+  alz_list <- list(
+    beta = alz_dbp$beta,
+    pvalues = alz_dbp$p_value,
+    varbeta = alz_dbp$standard_error^2,
+    type = 'cc',
+    pos = alz_dbp$base_pair_location,
+    chr = alz_dbp$chromosome,
+    snp = alz_dbp$snp
+  )
+  
+  res3 <- coloc::coloc.abf(dbp_list,alz_list)
+  
+  sbp_list <- list(
+    beta = sbp_chr$Effect,
+    MAF  = sbp_chr$Freq1,
+    pvalues = sbp_chr$P,
+    varbeta = sbp_chr$StdErr^2,
+    snp = sbp_chr$snp,
+    N = sbp_chr$TotalSampleSize,
+    type = 'quant',
+    pos = sbp_chr$pos,)
+  
+  alz_list <- list(
+    beta = alz_sbp$Beta,
+    pvalues = alz_sbp$Pvalue,
+    varbeta = alz_sbp$SE^2,
+    snp = alz_sbp$MarkerName,
+    type = 'cc',
+    pos = alz_sbp$Position,
+    chr = alz_sbp$chromosome,
+    snp = paste0(alz_sbp$chr,':',alz_sbp$Position)
+  )
+  
+  res4 <- coloc::coloc.abf(sbp_list,alz_list)
+  
+}
+
+'AlzD_deRojas_2021/Sumstats_SPIGAPUK2_20190625/Sumstats_SPIGAPUK2_20190625.txt')
+
+
+
+
+
+

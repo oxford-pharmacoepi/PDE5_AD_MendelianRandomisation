@@ -1,5 +1,5 @@
-"chr" "pos" "effect_allele" "other_allele" "N" "beta" "se" "pval" "eaf" "SNP"
-"1" "4" "120416096" "T" "C" 361194 -5.82383e-05 0.000123936 0.638422 0.9689014 "rs17355550"
-"2" "4" "120423094" "G" "A" 361194 1.1565e-05 6.2767e-05 0.853816 0.862407 "rs80223330"
-"3" "4" "120502461" "T" "C" 361194 3.02159e-05 5.20995e-05 0.561938 0.214642 "rs12646525"
-"4" "4" "120544112" "C" "T" 361194 -4.92328e-05 4.30166e-05 0.252414 0.522588 "rs7672519"
+"SNP" "chr" "effect_allele" "other_allele" "beta" "se" "pval" "outcome" "mr_keep" "pval_origin" "id" "eaf"
+"1" "rs17355550" 4 "C" "T" 0.0261 0.0262 0.318 "outcome" TRUE "reported" "outcome" NA
+"2" "rs80223330" 4 "A" "G" 0.01 0.0141 0.477 "outcome" TRUE "reported" "outcome" NA
+"3" "rs12646525" 4 "C" "T" -0.0015 0.0114 0.8976 "outcome" TRUE "reported" "outcome" NA
+"4" "rs7672519" 4 "C" "T" -4e-04 0.0093 0.9662 "outcome" TRUE "reported" "outcome" NA

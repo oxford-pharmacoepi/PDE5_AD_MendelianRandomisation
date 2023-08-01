@@ -308,40 +308,28 @@ write.table(gwasAlzD_Wightman_DBP ,'iv_AlzD_DBP_2.txt')
 write.table(gwasAlzD_Wightman_SBP ,'iv_AlzD_SBP_2.txt')
 
 
-# Secondary analysis: Alzheimer disease gwas - UKB
-gwasAlzD_UKB <- as_tibble(read_table(paste0(pathToData,'GWAS/AD.gwas.imputed_v3.both_sexes.tsv.bgz')))
+# Secondary analysis: Alzheimer disease gwas - de Rojas
 
-gwasAlzD_UKB_DBP <- gwasAlzD_UKB %>%
-  mutate(beta = as.numeric(beta), se = as.numeric(se), pval = as.numeric(pval)) %>%
-  separate(variant, into=c('chr','pos','EA','OA'), sep =':') %>%
-  filter(chr == 4 & pos %in% c(120423094,120502461,120416096,120532085,120509279)) %>%
-  mutate(eaf = if_else(minor_allele == EA, minor_AF, 1-minor_AF)) %>%
-  select(chr, pos,
-         effect_allele = "EA", other_allele = "OA",
-         N = "n_complete_samples",
-         beta, se, pval, eaf) %>%
-  mutate(SNP = case_when(
-    pos == 120423094 ~ "rs80223330",
-    pos == 120502461 ~ "rs12646525",
-    pos == 120416096 ~ "rs17355550",
-    pos == 120532085 ~ "rs10050092",
-    pos == 120509279 ~ "rs66887589"
-  )) 
+gwasAlzD_deRojas <- as_tibble(read_table(paste0(pathToData,'GWAS/AlzD_deRojas_2021/Sumstats_SPIGAPUK2_20190625/Sumstats_SPIGAPUK2_20190625.txt')))
 
-gwasAlzD_UKB_DBP <- gwasAlzD_UKB_DBP %>%
+gwasAlzD_deRojas_DBP <- gwasAlzD_deRojas %>%
+  filter(RS%in% c("rs80223330","rs12646525","rs17355550","rs10050092","rs66887589")) %>%
+  select(SNP = RS,
+         chr = CHR,
+         effect_allele = A1, other_allele = A2,
+         beta = Beta, se = SE, pval = P)
+ 
+
+gwasAlzD_deRojas_DBP <- gwasAlzD_deRojas_DBP %>%
   format_data(type = "outcome") %>%
   mutate(id.outcome = "outcome",
-         outcome = "outcome")
+         outcome = "outcome", eaf.outcome = NA)
 
-e <- harmonise_data(iv_DBP,gwasAlzD_UKB_DBP) %>%
+e <- harmonise_data(iv_DBP,gwasAlzD_deRojas_DBP) %>%
   summarise(SNP = SNP,
             CHR = chr.outcome, 
-            POS = pos.outcome,
-            'N_exposure' = samplesize.exposure,
             'EA_exposure' = effect_allele.exposure,
-            'EA_outcome'  = effect_allele.outcome,
             'OA_exposure' = other_allele.exposure,
-            'OA_outcome' = other_allele.outcome,
             'EAF_exposure' = round(eaf.exposure, digits = 2),
             'EAF_outcome'  = round(eaf.outcome, digits = 2),
             'Beta_exposure' = round(beta.exposure, digits = 2),
@@ -350,39 +338,27 @@ e <- harmonise_data(iv_DBP,gwasAlzD_UKB_DBP) %>%
             'SE_outcome'  = round(se.outcome, digits = 2),
             'PVAL_exposure' = formatC(pval.exposure, format = "e", digits = 1),
             'PVAL_outcome' = pval.outcome) 
-write.table(gwasAlzD_UKB_DBP ,'iv_AlzD_DBP_3.txt')
+write.table(gwasAlzD_deRojas_DBP,'iv_AlzD_DBP_3.txt')
 
-gwasAlzD_UKB_SBP <- gwasAlzD_UKB %>%
-  mutate(beta = as.numeric(beta), se = as.numeric(se), pval = as.numeric(pval)) %>%
-  separate(variant, into=c('chr','pos','EA','OA'), sep =':') %>%
-  filter(chr == 4 & pos %in% c(120423094,120502461,120416096,120544112)) %>%
-  mutate(eaf = if_else(minor_allele == EA, minor_AF, 1-minor_AF)) %>%
-  select(chr, pos,
-         effect_allele = "EA", other_allele = "OA",
-         N = "n_complete_samples", beta, se, pval, eaf) %>%
-  mutate(SNP = case_when(
-    pos == 120423094 ~ "rs80223330",
-    pos == 120502461 ~ "rs12646525",
-    pos == 120416096 ~ "rs17355550",
-    pos == 120544112 ~ "rs7672519"
-  )) 
+gwasAlzD_deRojas_SBP <- gwasAlzD_deRojas %>%
+  filter(RS %in% c("rs80223330","rs12646525","rs17355550","rs7672519")) %>%
+  select(SNP = RS,
+         chr = CHR,
+         effect_allele = A1, other_allele = A2,
+         beta = Beta, se = SE, pval = P)
 
 
-iv_Alz_UKB_SBP <- gwasAlzD_UKB_SBP %>% 
+iv_Alz_deRojas_SBP <- gwasAlzD_deRojas_SBP %>% 
   format_data(type = "outcome") %>%
   mutate(id.outcome = "outcome",
-         outcome = "outcome")
-write.table(gwasAlzD_UKB_SBP ,'iv_AlzD_SBP_3.txt')
+         outcome = "outcome", eaf.outcome = NA)
+write.table(iv_Alz_deRojas_SBP ,'iv_AlzD_SBP_3.txt')
 
-f <- harmonise_data(iv_SBP,iv_Alz_UKB_SBP) %>%
+f <- harmonise_data(iv_SBP,iv_Alz_deRojas_SBP ) %>%
   summarise(SNP = SNP,
             CHR = chr.outcome, 
-            POS = pos.outcome,
-            'N_outcome' = samplesize.outcome,
             'EA_exposure' = effect_allele.exposure,
-            'EA_outcome'  = effect_allele.outcome,
             'OA_exposure' = other_allele.exposure,
-            'OA_outcome' = other_allele.outcome,
             'EAF_exposure' = round(eaf.exposure, digits = 2),
             'EAF_outcome'  = round(eaf.outcome, digits = 2),
             'Beta_exposure' = round(beta.exposure, digits = 2),
@@ -390,6 +366,6 @@ f <- harmonise_data(iv_SBP,iv_Alz_UKB_SBP) %>%
             'SE_exposure' = round(se.exposure, digits = 2),
             'SE_outcome'  = round(se.outcome, digits = 2),
             'PVAL_exposure' = formatC(pval.exposure, format = "e", digits = 1),
-            'PVAL_outcome' = pval.outcome)
+            'PVAL_outcome' = pval.outcome) 
 
 
