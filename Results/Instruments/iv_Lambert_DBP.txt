@@ -1,0 +1,6 @@
+"SNP" "chr" "pos" "effect_allele.outcome" "other_allele.outcome" "pval.outcome" "beta.outcome" "se.outcome" "id.outcome" "outcome"
+"1" "rs17355550" 4 120416096 "C" "T" 0.05273 0.0999 0.0515 "outcome" "outcome"
+"2" "rs80223330" 4 120423094 "A" "G" 0.1995 0.0355 0.0277 "outcome" "outcome"
+"3" "rs12646525" 4 120502461 "T" "C" 0.9944 -1e-04 0.0195 "outcome" "outcome"
+"4" "rs66887589" 4 120509279 "C" "T" 0.8762 0.0024 0.0156 "outcome" "outcome"
+"5" "rs10050092" 4 120532085 "C" "T" 0.6055 -0.0084 0.0163 "outcome" "outcome"
