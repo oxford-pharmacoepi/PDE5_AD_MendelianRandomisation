@@ -1,6 +1,0 @@
-"SNP" "chr" "effect_allele" "other_allele" "beta" "se" "pval" "outcome" "mr_keep" "pval_origin" "id" "eaf"
-"1" "rs17355550" 4 "C" "T" 0.0261 0.0262 0.318 "outcome" TRUE "reported" "outcome" NA
-"2" "rs80223330" 4 "A" "G" 0.01 0.0141 0.477 "outcome" TRUE "reported" "outcome" NA
-"3" "rs12646525" 4 "C" "T" -0.0015 0.0114 0.8976 "outcome" TRUE "reported" "outcome" NA
-"4" "rs66887589" 4 "C" "T" -4e-04 0.0094 0.9688 "outcome" TRUE "reported" "outcome" NA
-"5" "rs10050092" 4 "C" "T" -1e-04 0.0099 0.993 "outcome" TRUE "reported" "outcome" NA

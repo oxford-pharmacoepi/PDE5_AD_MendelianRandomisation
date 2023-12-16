@@ -30,6 +30,7 @@ for(num_gwas in c(3)){
     
     # Mendelian randomisation
     dat <- harmonise_data(exp,out)
+    dat <- harmonise_ld_dat(dat,ld_matrix(dat$SNP))
     res <- as.data.frame(IVWcorrel(betaYG = dat$beta.outcome,  sebetaYG = dat$se.outcome,
                                    betaXG = dat$beta.exposure, sebetaXG = dat$se.exposure,
                                    rho = ld_matrix(dat$SNP)))

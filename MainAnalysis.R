@@ -13,6 +13,7 @@ cl   <- numeric()
 j <- 1
 
 dec <- c(-5.5,-8.4)
+dec <- c(1,1)
 for (i in c('DBP','SBP')){
   # Snp - exposure
   exp <- read.table(paste0('iv_',i,'.txt')) %>%
@@ -34,6 +35,7 @@ for (i in c('DBP','SBP')){
   res <- as.data.frame(IVWcorrel(betaYG = dat$beta.outcome,  sebetaYG = dat$se.outcome,
                                  betaXG = dat$beta.exposure, sebetaXG = dat$se.exposure,
                                  rho = ld_matrix(dat$SNP)))
+  
 
   beta[j]   <- exp(res$beta_IVWcorrel*dec[j]) 
   se[j] <- res$se_IVWcorrel.random*dec[j]
