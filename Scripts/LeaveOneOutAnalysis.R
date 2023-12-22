@@ -1,26 +1,24 @@
-
-exposure <- c("DBP")
+exposure_i <- c("DBP")
 outcome  <- c("Lambert","Wightman","deRojas","Bellenguez")
 
-for(exposure_i in exposure){
-  # ld matrix
-  ld_mat <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix_",exposure_i,".txt"))
-  
-  pattern <- ld_mat %>%
-    tibble::as_tibble() %>%
-    colnames() %>%
-    tibble::tibble() %>%
-    tidyr::separate(col = ".", into = c("SNP", "effect_allele","other_allele"), sep = "_")
-  
-  # Snp - exposure
-  exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt")) %>%
-    dplyr::mutate(beta.exposure = -5.5*beta.exposure)
-  
-  for(outcome_i in outcome){
-    # snp - outcome
-    out <- read.table(paste0(pathResults,"InstrumentSelection/iv_",outcome_i,".txt"), header = TRUE) %>%
-      dplyr::inner_join(exp %>% dplyr::select("SNP"),
-                        by = "SNP")
+# ld matrix
+ld_mat <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix_",exposure_i,".txt"))
+
+pattern <- ld_mat %>%
+  tibble::as_tibble() %>%
+  colnames() %>%
+  tibble::tibble() %>%
+  tidyr::separate(col = ".", into = c("SNP", "effect_allele","other_allele"), sep = "_")
+
+# Snp - exposure
+exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt"))
+
+for(outcome_i in outcome){
+  # snp - outcome
+  out <- readr::read_table(paste0(pathResults,"InstrumentSelection/iv_",outcome_i,".txt")) %>%
+    dplyr::inner_join(exp %>% dplyr::select("SNP"),
+                      by = "SNP")
+    
     # harmonise data
     dat_harmonised <- pattern %>%
       dplyr::left_join(
@@ -39,14 +37,20 @@ for(exposure_i in exposure){
         effect_allele.outcome  = dplyr::if_else(effect_allele.outcome != effect_allele, effect_allele, effect_allele.outcome),
         other_allele.outcome   = dplyr::if_else(other_allele.outcome  != other_allele,  other_allele,  other_allele.outcome),
       )
-
+    
     dat <- TwoSampleMR::harmonise_ld_dat(dat_harmonised,ld_mat)
     
-    res <- TwoStepCisMR::IVWcorrel(betaYG  = dat$x$beta.outcome,
-                                   sebetaYG = dat$x$se.outcome,
-                                   betaXG   = dat$x$beta.exposure,
-                                   sebetaXG = dat$x$se.exposure,
-                                   rho = dat$ld) %>%
+    for(i in pattern$SNP){
+    dat_loo <- dat$x %>%
+      dplyr::filter(SNP != i)
+    ld_loo  <- dat$ld[!colnames(dat$ld) == i,]
+    ld_loo  <- ld_loo[,!colnames(ld_loo) == i]
+
+    res <- TwoStepCisMR::IVWcorrel(betaYG   = dat_loo$beta.outcome,
+                                   sebetaYG = dat_loo$se.outcome,
+                                   betaXG   = dat_loo$beta.exposure,
+                                   sebetaXG = dat_loo$se.exposure,
+                                   rho = ld_loo) %>%
       as.data.frame() %>%
       dplyr::rename("beta" = "beta_IVWcorrel",
                     "se"   = "se_IVWcorrel.random",
@@ -58,26 +62,16 @@ for(exposure_i in exposure){
                     "cihigh" = exp(beta+1.96*se))
     
     if(!"harmonised" %in% ls()){
-      harmonised <- dat$x %>%
-        dplyr::mutate("outcome" = outcome_i)
-      
       MR_result  <- res 
-        
+      
     }else{
-      harmonised <- harmonised %>%
-        dplyr::union_all(
-          dat$x %>%
-            dplyr::mutate("outcome" = outcome_i)
-        )
-
       MR_result <- MR_result %>%
         dplyr::union_all(res)
     }
   }
-
-  readr::write_delim(harmonised, paste0(pathResults,"MR_Results/harmonised_",exposure_i,"_scaled.txt"))
-  readr::write_delim(MR_result, paste0(pathResults,"MR_Results/MR_Results_",exposure_i,"_scaled.txt"))
 }
+
+readr::write_delim(MR_result, paste0(pathResults,"MR_Results/LeaveOneOut_Results_",exposure_i,".txt"))
 
 
 

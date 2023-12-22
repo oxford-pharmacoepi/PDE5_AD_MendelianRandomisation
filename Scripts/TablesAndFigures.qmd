@@ -1,0 +1,217 @@
+---
+title: " "
+format:
+  docx:
+    reference-doc: reference-doc.docx
+execute:
+  echo: false
+---
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+library("magrittr")
+pathData    <- "D:/Projects/PDE5_AD_MendelianRandomisation/"
+pathResults <- paste0(pathData,"Results/")
+```
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+# Table 1
+iv <- read.table(paste0(pathResults,"InstrumentSelection/iv_DBP.txt"))
+
+Table1 <- iv %>%
+  dplyr::relocate(SNP) %>%
+  dplyr::arrange(pval.exposure) %>%
+  dplyr::mutate(
+   EA   = dplyr::if_else(beta.exposure < 0, effect_allele.exposure, other_allele.exposure),
+   OA   = dplyr::if_else(beta.exposure < 0, other_allele.exposure, effect_allele.exposure),
+   EAF  = dplyr::if_else(beta.exposure < 0, eaf.exposure, 1-eaf.exposure),
+   Beta = dplyr::if_else(beta.exposure < 0, beta.exposure, -beta.exposure)
+  ) %>%
+  dplyr::select("SNP"  = "SNP",
+                "CHR"  = "chr",
+                "Position (GRCh19/hg37)" = "pos",
+                "EA",
+                "OA",
+                "EAF"  = "eaf.exposure",
+                "Beta",
+                "SE"   = "se.exposure",
+                "N"    = "samplesize.exposure",
+                "PValue" = "pval.exposure") %>%
+  dplyr::mutate(
+    EAF  = round(EAF, digits = 2),
+    Beta = round(Beta, digits = 2),
+    SE   = round(SE, digits = 2),
+    PValue = formatC(PValue, digits = 1, format = "e")
+  ) %>%
+  dplyr::rename("Beta (mmHg)" = "Beta") %>%
+  flextable::flextable() %>%
+  flextable::align(j = c(2:10), align = "center", part = "all") %>%
+  flextable::bold(i = 1, bold = TRUE, part = "header")
+
+```
+*Table 1.* Single nucleotide polymporphisms selected as instruments for phosphodiesterase 5 (PDE5) inhibition in the Mendelian randomization analysis. *Note:* CHR = Chromosome, EA = Effect allele, OA = Other allele, EAF = Effect allele frequency, SE = Standard error, N = Number of individuals.
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+# Supplementary table 1
+iv <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix.txt")) %>%
+  as.data.frame() %>%
+  dplyr::rename("rs10050092 (C/T)" = "rs10050092_C_T",
+                "rs12646525 (T/C)" = "rs12646525_T_C",
+                "rs17355550 (C/T)" = "rs17355550_C_T",
+                "rs66887589 (C/T)" = "rs66887589_C_T",
+                "rs80223330 (A/G)" = "rs80223330_A_G") %>%
+  dplyr::mutate(`rs10050092 (C/T)` = round(`rs10050092 (C/T)`, digits = 2),
+                `rs12646525 (T/C)` = round(`rs12646525 (T/C)`, digits = 2),
+                `rs17355550 (C/T)` = round(`rs17355550 (C/T)`, digits = 2),
+                `rs66887589 (C/T)` = round(`rs66887589 (C/T)`, digits = 2),
+                `rs80223330 (A/G)` = round(`rs80223330 (A/G)`, digits = 2))
+STable1 <- iv %>%
+  dplyr::mutate(SNP = colnames(iv)) %>%
+  dplyr::relocate(SNP) %>%
+  flextable::flextable() %>%
+  flextable::bold(i = 1, bold = TRUE, part = "header") %>%
+  flextable::bold(j = 1, bold = TRUE, part = "body") %>%
+  flextable::align(part = "all", align = "center") %>%
+  flextable::vline(j = 1)
+
+```
+*Supplementary table 1.* Linkage disequilibrium matrix of the instruments used for the Mendelian randomization analysis.
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+# Supplementary table 2
+tab <- read.table(paste0(pathResults,"MR_Results/harmonised_DBP.txt"), header = TRUE) %>%
+  dplyr::filter(outcome == "Lambert") %>%
+  dplyr::distinct() %>%
+  dplyr::mutate(
+    beta.exposure = round(beta.exposure, digits = 2),
+    beta.outcome  = round(beta.outcome, digits = 2),
+    se.exposure   = round(se.exposure, digits = 2),
+    se.outcome    = round(se.outcome, digits = 2),
+    pval.exposure = formatC(pval.exposure, digits = 1, format = "e"),
+    pval.outcome  = formatC(pval.outcome, digits = 1, format = "e"),
+    eaf.exposure  = round(eaf.exposure, digits = 2),
+    eaf.outcome   = round(eaf.outcome, digits = 2)
+  ) %>%
+  dplyr::select("SNP","EA" = "effect_allele", "OA" = "other_allele", 
+                "Beta_Exposure" = "beta.exposure",
+                "Beta_Outcome"  = "beta.outcome",
+                "SE_Exposure"   = "se.exposure",
+                "SE_Outcome"    = "se.outcome",
+                "EAF_Exposure"  = "eaf.exposure",
+                "EAF_Outcome"   = "eaf.outcome",
+                "PValue_Exposure" = "pval.exposure",
+                "PValue_Outcome"  = "pval.outcome") 
+STable2 <- tab %>%
+  flextable::flextable() %>%
+  ftExtra::span_header(sep = "_") %>%
+  flextable::align(align = "center", part = "all") %>%
+  flextable::bold(i = c(1,2), bold = TRUE, part = "header") %>%
+  flextable::vline(j = seq(3,11,2))
+```
+*Supplementary table 2.* Harmonized variants respect the alleles of the linkage disequilibrium matrix. *Note:* EA = Effect allele, OA = Other allele, SE = Standard error, EAF = Effect allele frequency.
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+# Table 2
+tab <- read.table(paste0(pathResults,"MR_Results/MR_Results_DBP_scaled.txt"), header = TRUE) %>%
+  dplyr::filter(outcome == "Lambert") %>%
+  dplyr::relocate(outcome) %>%
+  dplyr::rename("Study" = "outcome") %>%
+  dplyr::mutate("Estimate (95% CI)" = paste0(round(OR, digits = 2),
+                                             " (",
+                                             round(cilow, digits = 2),
+                                             "-",
+                                             round(cihigh, digits = 2),
+                                             ")"),
+                Estimate = round(OR, digits = 2),
+                `P value`   = formatC(pval, digits = 2, format = "e"),
+                Instruments = as.character(instruments))
+
+p1 <- ggplot2::ggplot(tab,
+                ggplot2::aes(y = Study)) +
+  ggplot2::geom_point(
+    ggplot2::aes(x = OR), 
+    shape = 15, 
+    size  = 3
+  ) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(xmin = cilow, xmax = cihigh),
+    width = 0.05
+  ) +
+  ggplot2::geom_vline(
+    xintercept = 1,
+    linetype   = "dashed"
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = c(0.5, 1, 1.5),
+    labels = c(0.5, 1, 1.5)
+  ) +
+  ggplot2::xlim(c(0.75,1.25)) +
+  ggplot2::labs(x = "Odds ratio (OR)", y = " ") +
+  ggplot2::theme(
+    axis.ticks.y = ggplot2::element_blank(),
+    axis.text.y  = ggplot2::element_blank()
+  )
+
+p2 <- ggplot2::ggplot(tab) +
+  ggplot2::geom_text(
+    ggplot2::aes(x = 1, y = Study, label = Study),
+    hjust = 0.5,
+    vjust = 0.5,
+    fontface = "bold"
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(x = 1, y = 1.5, label = "Study"),
+    hjust = 0.5,
+    vjust = 0.5,
+    fontface = "bold"
+  )+
+  ggplot2::theme_void()
+
+p3 <- ggplot2::ggplot(tab) +
+  ggplot2::geom_text(
+    ggplot2::aes(x = 1, y = 1, label = `Estimate (95% CI)`),
+    hjust = 0.5,
+    vjust = 0.5
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(x = 1, y = 1.1, label = "Estimate (95% CI)"),
+    hjust = 0.5,
+    vjust = 0.5,
+    fontface = "bold"
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(x = 1.1, y = 1, label = `P value`),
+    hjust = 0.5,
+    vjust = 0.5
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(x = 1.1, y = 1.1, label = "P value"),
+    hjust = 0.5,
+    vjust = 0.5,
+    fontface = "bold"
+  ) +
+  ggplot2::xlim(c(0.75,1.25)) + 
+  ggplot2::ylim(c(0.5,1.5)) +
+  ggplot2::theme_void() 
+
+a <- ggpubr::ggarrange(p2,p1,p3, heights = c(1,0.1,1.5), widths = c(0.1,0.7,.2),
+                  ncol = 3, nrow = 1)
+a
+ggplot2::ggsave(plot = a,here::here("prova.png"), width = 16, height = 5, units = "cm")
+
+ggplot2::ggarrange
+lay <- c(patchwork::area(t = 0, l = 1, b = 10, r = 2),
+         patchwork::area(t = 1, l = 3, b = 10, r = 9),
+         patchwork::area(t = 0, l = 8, b = 10, r = 11))
+
+a <- p2 + p1 + p3 + patchwork::plot_layout(design = lay) 
+
+
+```
+
+
+
+
+
+```{r}
+
+```

@@ -20,4 +20,10 @@ source(here::here("Scripts/Colocalisation.R"))
 dir.create(paste0(pathResults,"TwoStepMR"))
 source(here::here("Scripts/TwoStepMR.R"))
 
+# Leave-one-out analysis
+dir.create(paste0(pathResults,"LeaveOneOutAnalysis"))
+source(here::here("Scripts/LeaveOneOutAnalysis.R"))
 
+# Figures and tables from the article
+dir.create(paste0(pathResults,"TablesAndFigures"))
+source(here::here("Scripts/TablesAndFigures."))

@@ -140,5 +140,5 @@ for(exposure_i in "DBP"){
 }
 
 
-readr::write_delim(TwoStepMR_table,paste0(pathResults,"TwoStepMR/twostepMR.R"))
+readr::write_delim(TwoStepMR_table,paste0(pathResults,"TwoStepMR/twostepMR.txt"))
 
