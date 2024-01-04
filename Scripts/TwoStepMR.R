@@ -1,17 +1,17 @@
 # Two step cis-MR
 source(here::here("Functions/loadGwas.R"))
 dir.create(pathResults,"TwoStepMR/")
-confounders <- c(#"ukb-b-19953", # BMI - https://gwas.mrcieu.ac.uk/datasets/ukb-b-19953/, HG19/GRCh37
-                 #'ukb-b-7376', # Impedance of leg (right) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-7376/, HG19/GRCh37
-                 #'ukb-b-14068', # Impedance of leg (left) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-14068/, HG19/GRCh37
-                 #'ukb-b-7859', # Impedance of arm (right) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-7859/, HG19/GRCh37
-                 #'ukb-b-19379', # Impedance of arm (left) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-19379/, HG19/GRCh37
-                 #'ukb-b-19921', # Impedance of whole body - https://gwas.mrcieu.ac.uk/datasets/ukb-b-19921/, HG19/GRCh37
-                 #'ukb-b-10787', # Standing height - https://gwas.mrcieu.ac.uk/datasets/ukb-b-10787/, HG19/GRCh37
-                 #"ebi-a-GCST004607", # Plateletcrit - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST004607/, HG19/GRCh37
-                 #'ebi-a-GCST004626', # Myeloid white cell count - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST004626/, HG19/GRCh37
-                 #'ukb-d-30080_irnt', # Platelet count - https://gwas.mrcieu.ac.uk/datasets/ukb-d-30080_irnt/, HG19/GRCh37
-                 #'ieu-b-30', # white blood cell count - https://gwas.mrcieu.ac.uk/datasets/ieu-b-30/, 	HG19/GRCh37
+confounders <- c("ukb-b-19953", # BMI - https://gwas.mrcieu.ac.uk/datasets/ukb-b-19953/, HG19/GRCh37
+                 'ukb-b-7376', # Impedance of leg (right) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-7376/, HG19/GRCh37
+                 'ukb-b-14068', # Impedance of leg (left) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-14068/, HG19/GRCh37
+                 'ukb-b-7859', # Impedance of arm (right) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-7859/, HG19/GRCh37
+                 'ukb-b-19379', # Impedance of arm (left) - https://gwas.mrcieu.ac.uk/datasets/ukb-b-19379/, HG19/GRCh37
+                 'ukb-b-19921', # Impedance of whole body - https://gwas.mrcieu.ac.uk/datasets/ukb-b-19921/, HG19/GRCh37
+                 'ukb-b-10787', # Standing height - https://gwas.mrcieu.ac.uk/datasets/ukb-b-10787/, HG19/GRCh37
+                 "ebi-a-GCST004607", # Plateletcrit - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST004607/, HG19/GRCh37
+                 'ebi-a-GCST004626', # Myeloid white cell count - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST004626/, HG19/GRCh37
+                 'ukb-d-30080_irnt', # Platelet count - https://gwas.mrcieu.ac.uk/datasets/ukb-d-30080_irnt/, HG19/GRCh37
+                 'ieu-b-30', # white blood cell count - https://gwas.mrcieu.ac.uk/datasets/ieu-b-30/, 	HG19/GRCh37
                  'ebi-a-GCST005195', # Coronary artery disease - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST005195/, HG19/GRCh37
                  'ebi-a-GCST004614', # Granulocyte count - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST004614/, 	HG19/GRCh37
                  'ebi-a-GCST004620') # Sum basophil neutrophil counts - https://gwas.mrcieu.ac.uk/datasets/ebi-a-GCST004620/, HG19/GRCh37
