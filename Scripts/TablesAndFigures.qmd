@@ -1,8 +1,7 @@
 ---
 title: " "
 format:
-  docx:
-    reference-doc: reference-doc.docx
+  docx
 execute:
   echo: false
 ---
@@ -13,8 +12,7 @@ pathData    <- "D:/Projects/PDE5_AD_MendelianRandomisation/"
 pathResults <- paste0(pathData,"Results/")
 ```
 
-*Table 1.* Single nucleotide polymporphisms selected as instruments for phosphodiesterase 5 (PDE5) inhibition in the Mendelian randomization analysis. *Note:* CHR = Chromosome, EA = Effect allele, OA = Other allele, EAF = Effect allele frequency, SE = Standard error, N = Number of individuals.
-```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE}
 # Table 1
 iv <- read.table(paste0(pathResults,"InstrumentSelection/iv_DBP.txt"))
 
@@ -48,10 +46,11 @@ Table1 <- iv %>%
   flextable::align(j = c(2:10), align = "center", part = "all") %>%
   flextable::bold(i = 1, bold = TRUE, part = "header")
 
+table <- list("Table1" = Table1)
+table_notes <- list("Table1" = "**Table 1.** Single nucleotide polymporphisms selected as instruments for phosphodiesterase 5 (PDE5) inhibition in the Mendelian randomization analysis. *Note:* CHR = Chromosome, EA = Effect allele, OA = Other allele, EAF = Effect allele frequency, SE = Standard error, N = Number of individuals.")
 ```
 
-*Supplementary table 1.* Linkage disequilibrium matrix of the instruments used for the Mendelian randomization analysis.
-```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE}
 # Supplementary table 1
 iv <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix.txt")) %>%
   as.data.frame() %>%
@@ -74,11 +73,12 @@ STable1 <- iv %>%
   flextable::align(part = "all", align = "center") %>%
   flextable::vline(j = 1)
 
+stable <- list("STable1" = STable1)
+stable_notes <- list("STable1" = "**Supplementary table 1.** Linkage disequilibrium matrix of the instruments used for the Mendelian randomization analysis.")
 ```
 
-*Supplementary table 2.* Harmonized variants respect the alleles of the linkage disequilibrium matrix. *Note:* EA = Effect allele, OA = Other allele, SE = Standard error, EAF = Effect allele frequency.
-```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
-# Supplementary table 2
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE}
+#Supplementary table 2
 tab <- read.table(paste0(pathResults,"MR_Results/harmonised_DBP.txt"), header = TRUE) %>%
   dplyr::filter(outcome == "Lambert") %>%
   dplyr::distinct() %>%
@@ -92,7 +92,7 @@ tab <- read.table(paste0(pathResults,"MR_Results/harmonised_DBP.txt"), header = 
     eaf.exposure  = round(eaf.exposure, digits = 2),
     eaf.outcome   = round(eaf.outcome, digits = 2)
   ) %>%
-  dplyr::select("SNP","EA" = "effect_allele", "OA" = "other_allele", 
+  dplyr::select("SNP","EA" = "effect_allele", "OA" = "other_allele",
                 "Beta_Exposure" = "beta.exposure",
                 "Beta_Outcome"  = "beta.outcome",
                 "SE_Exposure"   = "se.exposure",
@@ -100,19 +100,21 @@ tab <- read.table(paste0(pathResults,"MR_Results/harmonised_DBP.txt"), header = 
                 "EAF_Exposure"  = "eaf.exposure",
                 "EAF_Outcome"   = "eaf.outcome",
                 "PValue_Exposure" = "pval.exposure",
-                "PValue_Outcome"  = "pval.outcome") 
+                "PValue_Outcome"  = "pval.outcome")
 STable2 <- tab %>%
   flextable::flextable() %>%
   ftExtra::span_header(sep = "_") %>%
   flextable::align(align = "center", part = "all") %>%
   flextable::bold(i = c(1,2), bold = TRUE, part = "header") %>%
-  flextable::vline(j = seq(3,11,2))
+  flextable::vline(j = seq(3,10,2))
+
+stable <- c(stable, list("STable2" = STable2))
+stable_notes <- c(stable_notes, list("STable2" = "**Supplementary table 2.** Harmonized variants respect the alleles of the linkage disequilibrium matrix. *Note:* EA = Effect allele, OA = Other allele, SE = Standard error, EAF = Effect allele frequency."))
 ```
 
-**Table 2.** Mendelian randomisation results for the main analysis.
-```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
-# Table 2
-tab <- read.table(paste0(pathResults,"MR_Results/MR_Results_DBP_scaled.txt"), header = TRUE) %>%
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE}
+# Figure 2
+dat <- read.table(paste0(pathResults,"MR_Results/MR_Results_DBP_scaled.txt"), header = TRUE) %>%
   dplyr::filter(outcome == "Lambert") %>%
   dplyr::relocate(outcome) %>%
   dplyr::rename("Study" = "outcome") %>%
@@ -123,226 +125,168 @@ tab <- read.table(paste0(pathResults,"MR_Results/MR_Results_DBP_scaled.txt"), he
                                              round(cihigh, digits = 2),
                                              ")"),
                 Estimate = round(OR, digits = 2),
-                `P value`   = formatC(pval, digits = 2, format = "e"),
+                `P value`   = round(pval, digits = 2),
                 Instruments = as.character(instruments),
                 num = 1)
+# Colors for the plot
+colp <- "#1D5197"
+coll <- "#a7a9ac"
 
-yval1 <- 0.75
-yval2 <- 1.25
+k <- nrow(dat)
 
-p1 <- ggplot2::ggplot(tab) +
-  ggplot2::geom_text(
-    ggplot2::aes(x = 1, y = 1, label = "Study", family = "Calibri"),
-    hjust = 0.5,
-    vjust = 0.5,
-    fontface = "bold"
-  ) + 
-  ggplot2::theme_void() +
-  ggplot2::xlim(c(0.75,1.25)) +
-  ggplot2::ylim(c(yval1,yval2))
+### generate point sizes
+psize <- 1.2
 
-p2 <- ggplot2::ggplot() +
-  ggplot2::theme_void() +
-  ggplot2::xlim(c(0.75,1.25)) +
-  ggplot2::ylim(c(yval1,yval2))
+### get the weights and format them as will be used in the forest plot
+weights <- 1
 
-p3 <-ggplot2::ggplot(tab) +
-  ggplot2::geom_text(
-    ggplot2::aes(x = 0.9, y = 1, label = "Estimate (95% CI)", family = "Calibri"),
-    hjust = 0.5,
-    vjust = 0.5,
-    fontface = "bold"
-  ) +
-  ggplot2::geom_text(
-    ggplot2::aes(x = 1.17, y = 1, label = "P value", family = "Calibri"),
-    hjust = 0.5,
-    vjust = 0.5,
-    fontface = "bold",
-  ) + 
-  ggplot2::theme_void() +
-  ggplot2::xlim(c(0.75,1.25)) +
-  ggplot2::ylim(c(yval1,yval2))
+png(filename=here::here("Figures/figure1.png"), width=16, height=6, units = "cm", res = 600)
 
-p4 <- ggplot2::ggplot(tab) +
-  ggplot2::geom_text(
-    ggplot2::aes(x = 1, y = 1.075, label = Study, family = "Calibri"),
-    hjust = 0.5,
-    vjust = 0.5,
-    fontface = "bold"
-  ) +
-    ggplot2::theme_void() +
-  ggplot2::xlim(c(0.75,1.25)) +
-  ggplot2::ylim(c(yval1,yval2))
+### adjust the margins
+par(mai = c(.5,0,0,0),  mgp = c(3,-.1,0), tcl=0.15)
 
+### forest plot with extra annotation
+p <- metafor::forest(dat$OR, ci.lb = dat$cilow, ci.ub = dat$cihigh,
+                     lty=c(1,0), annotate = TRUE, xlim = c(0,1.7), alim = c(0.9, 1.1), ylim = c(0.9, k + 0.8), cex.axis = 0.7, cex = 0.95, xlab = "", efac = 0,
+                     refline = NA, rowadj = -1, ilab = cbind(dat$Study, "54,162", "17,008 (31%)" , dat$`Estimate (95% CI)`, dat$`P value`),
+                     ilab.xpos = c(0.15, 0.4, 0.65, 1.3, 1.55))
+segments(x0 = 1, x1 = 1, y0 = -1, y1 = 1.15, col = coll) # Reference line at 1
+segments(dat$cilow, 1, dat$cihigh, 1, col=colp, lwd=1.5)
+points(dat$OR, 1, cex=0.95, col=colp, pch = 15)
+abline(h=1.2, col=coll)
 
-p5 <- ggplot2::ggplot(tab,
-                ggplot2::aes(y = num)) +
-  ggplot2::geom_point(
-    ggplot2::aes(x = OR), 
-    shape = 15, 
-    size  = 3
-  ) +
-  ggplot2::geom_errorbar(
-    ggplot2::aes(xmin = cilow, xmax = cihigh),
-    width = 0.05
-  ) +
-  ggplot2::geom_vline(
-    xintercept = 1,
-    linetype   = "dashed"
-  ) +
-  ggplot2::scale_x_continuous(
-    breaks = c(0.5, 1, 1.5),
-    labels = c(0.5, 1, 1.5)
-  ) +
-  ggplot2::xlim(c(0.75,1.25)) +
-  ggplot2::scale_y_continuous(
-    breaks = c(1),
-    labels = c(" "),
-    limits = c(yval1,yval2)
-  ) + 
-  ggplot2::labs(x = "Odds ratio (OR)", y = " ") +
-  ggplot2::theme(
-    axis.ticks.y = ggplot2::element_blank(),
-    axis.text.y  = ggplot2::element_blank(),
-    axis.text.x  = ggplot2::element_text(family = "Calibri"),
-    text = ggplot2::element_text(family = "Calibri")
-  )
+### add headings
+par(cex=p$cex, font=2)
+text(p$ilab.xpos[1], k+.3, pos = NULL, "Study")
+text(p$ilab.xpos[2], k+.3, c("Sample size"))
+text(p$ilab.xpos[3], k+.3, c("Cases (%)"))
+text(p$ilab.xpos[4], k+.3, c("OR (95% CI)"))
+text(p$ilab.xpos[5], k+.3, c("P-Value"))
+par(cex=0.7, font=1)
 
-p6 <- ggplot2::ggplot(tab) +
-  ggplot2::geom_text(
-    ggplot2::aes(x = 0.9, y = 1.075, label = `Estimate (95% CI)`, family = "Calibri"),
-    hjust = 0.5,
-    vjust = 0.5
-  ) +
-  ggplot2::geom_text(
-    ggplot2::aes(x = 1.17, y = 1.075, label = `P value`, family = "Calibri"),
-    hjust = 0.5,
-    vjust = 0.5
-  ) +
-  ggplot2::theme_void() +
-  ggplot2::xlim(c(0.75,1.25)) +
-  ggplot2::ylim(c(yval1,yval2))
+par(xpd=NA)
 
-a <- ggpubr::ggarrange(p1,p2,p3,p4,p5,p6,
-                       ncol = 3, nrow = 2, 
-                       widths = c(1,3,2), heights = c(0.1,1))
-
-ggplot2::ggsave(plot = a,here::here("prova.png"), width = 16, height = 3, units = "cm")
+# xlabel
+text(1, .7, c("Odds ratio per 100mg descrease of PDE5"), pos=NULL, offset=-0.3)
+figure_notes <- list("figure1" = "**Figure 1.** Analysis schema.",
+                     "figure2" = "**Figure 2.** Mendelian randomisation results for the main analysis.")
 ```
 
-**Supplementary Table 2. **Results of the two-step Mendelian randomisation analysis.
-```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
-tab <- read.table(paste0(pathResults,"TwoStepMR/twostepMR.txt"), header = TRUE) %>%
-  dplyr::filter(outcome == "Lambert") %>%
-  dplyr::distinct() %>%
-  dplyr::relocate(outcome) %>%
-  dplyr::mutate("Confounder" = dplyr::case_when(
-    confounder == "ukb-b-19953" ~ "BMI",
-    confounder == "ukb-b-7376"  ~ "Impedance of leg (right)",
-    confounder == "ukb-b-14068" ~ "Impedance of leg (left)",
-    confounder == "ukb-b-7859"  ~ "Impedance of arm (right)",
-    confounder == "ukb-b-19379" ~ "Impedance of arm (left)",
-    confounder == "ukb-b-19921" ~ "Impedance of whole body",
-    confounder == "ukb-b-10787" ~ "Standing height",
-    confounder == "ebi-a-GCST004607" ~ "Plateletcrit",
-    confounder == "ebi-a-GCST004626" ~ "Myeloid white cell count",
-    confounder == "ukb-d-30080_irnt" ~ "Platelet count",
-    confounder == "ieu-b-30" ~ "White blood cell count",
-    confounder == "ebi-a-GCST005195" ~ "Coronary artery disease",
-    confounder == "ebi-a-GCST004614" ~ "Granulocyte count",
-    confounder == "ebi-a-GCST004620" ~ "Sum basophil neutrophil counts"
-  )) %>%
-  dplyr::arrange(Confounder) %>%
-  dplyr::rename("GWAS ID" = "confounder",
-                "Outcome" = "outcome") %>%
-  dplyr::mutate("Associated SNPs" = dplyr::case_when(
-    Confounder == "BMI" ~ " ",
-    Confounder == "Impedance of leg (right)"       ~ "rs10050092, rs12646525",
-    Confounder == "Impedance of leg (left)"        ~ "rs10050092, rs12646525",
-    Confounder == "Impedance of arm (right)"       ~ "rs10050092",
-    Confounder == "Impedance of arm (left)"        ~ "rs10050092",
-    Confounder == "Impedance of whole body"        ~ "rs10050092",
-    Confounder == "Standing height"                ~ "rs10050092",
-    Confounder == "Plateletcrit"                   ~ "rs66887589, ",
-    Confounder == "Myeloid white cell count"       ~ "rs10050092, rs66887589",
-    Confounder == "Platelet count"                 ~ "rs10050092",
-    Confounder == "White blood cell count"         ~ "rs66887589",
-    Confounder == "Coronary artery disease"        ~ "rs66887589, rs80223330",
-    Confounder == "Granulocyte count"              ~ "rs66887589",
-    Confounder == "Sum basophil neutrophil counts" ~ "rs66887589")
-  ) %>%
-  dplyr::relocate("Confounder", .after = "Outcome") %>%
-  dplyr::relocate("GWAS ID",    .after = "Confounder") %>%
-  dplyr::relocate("Associated SNPs", .after = "GWAS ID") %>%
-  dplyr::mutate(OR = round(exp(beta_IVWcorrel), digits = 2)) %>%
-  dplyr::mutate(SE = round(se_IVWcorrel.random, digits = 2)) %>%
-  dplyr::mutate(`P-Value` = round(p_IVWcorrel.random, digits = 2)) %>%
-  dplyr::select(-tidyselect::contains("IVWcorrel"), -n_snp, -F_stat, -exposure)
 
-STable3 <- tab %>% 
-  flextable::flextable() %>%
-  flextable::bold(bold = TRUE, part = "header") %>%
-  flextable::align(align = c("center"), part = "all") 
-
-```
-
-```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
-or  <- read.table(paste0(pathResults,"MR_Results/MR_Results_DBP_scaled.txt"), header = TRUE) %>%
-  dplyr::filter(outcome == "Lambert") %>%
-  dplyr::mutate("Confounder" = "Main analysis") %>%
-  dplyr::select("Confounder", "OR", "cilow", "cihigh")
-
-tab <- read.table(paste0(pathResults,"TwoStepMR/twostepMR.txt"), header = TRUE) %>%
-  dplyr::filter(outcome == "Lambert") %>%
-  dplyr::distinct() %>%
-  dplyr::relocate(outcome) %>%
-  dplyr::mutate("Confounder" = dplyr::case_when(
-    confounder == "ukb-b-19953" ~ "BMI",
-    confounder == "ukb-b-7376"  ~ "Impedance of leg (right)",
-    confounder == "ukb-b-14068" ~ "Impedance of leg (left)",
-    confounder == "ukb-b-7859"  ~ "Impedance of arm (right)",
-    confounder == "ukb-b-19379" ~ "Impedance of arm (left)",
-    confounder == "ukb-b-19921" ~ "Impedance of whole body",
-    confounder == "ukb-b-10787" ~ "Standing height",
-    confounder == "ebi-a-GCST004607" ~ "Plateletcrit",
-    confounder == "ebi-a-GCST004626" ~ "Myeloid white cell count",
-    confounder == "ukb-d-30080_irnt" ~ "Platelet count",
-    confounder == "ieu-b-30" ~ "White blood cell count",
-    confounder == "ebi-a-GCST005195" ~ "Coronary artery disease",
-    confounder == "ebi-a-GCST004614" ~ "Granulocyte count",
-    confounder == "ebi-a-GCST004620" ~ "Sum basophil neutrophil counts"
-  )) %>%
-  dplyr::mutate(OR = exp(beta_IVWcorrel),
-                cilow  = exp(beta_IVWcorrel-1.96*se_IVWcorrel.random),
-                cihigh = exp(beta_IVWcorrel+1.96*se_IVWcorrel.random)) %>%
-  dplyr::mutate(Confounder = factor(Confounder, labels = Confounder)) %>%
-  dplyr::select("Confounder", "OR", "cilow", "cihigh") %>%
-  dplyr::arrange(Confounder) %>%
-  dplyr::mutate(n = dplyr::row_number()+1) %>%
-  dplyr::union_all(or %>% dplyr::mutate(n = 1)) %>%
-  dplyr::arrange(n)
-
-# a <- c()
-# for(i in 1:nrow(tab)){
-#   a 
-# }
-
-ggplot2::ggplot(data = tab, ggplot2::aes(x = OR, y = n)) +
-  ggplot2::geom_point(
-    ggplot2::aes(x = OR), 
-    shape = 15, size = 3
-  ) +
-  ggplot2::geom_errorbar(
-    ggplot2::aes(xmin = cilow, xmax = cihigh),
-    width = 0.5
-  ) +
-  ggplot2::geom_vline(
-    xintercept = 1,
-    linetype   = "dashed"
-  ) +
-  ggplot2::scale_y_discrete(
-    breaks = tab$n,
-    labels = c()
-  ) 
+**Supplementary Table 3. **Results of the two-step Mendelian randomisation analysis.
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE}
+# tab <- read.table(paste0(pathResults,"TwoStepMR/twostepMR.txt"), header = TRUE) %>%
+#   dplyr::filter(outcome == "Lambert") %>%
+#   dplyr::distinct() %>%
+#   dplyr::relocate(outcome) %>%
+#   dplyr::mutate("Confounder" = dplyr::case_when(
+#     confounder == "ukb-b-19953" ~ "BMI",
+#     confounder == "ukb-b-7376"  ~ "Impedance of leg (right)",
+#     confounder == "ukb-b-14068" ~ "Impedance of leg (left)",
+#     confounder == "ukb-b-7859"  ~ "Impedance of arm (right)",
+#     confounder == "ukb-b-19379" ~ "Impedance of arm (left)",
+#     confounder == "ukb-b-19921" ~ "Impedance of whole body",
+#     confounder == "ukb-b-10787" ~ "Standing height",
+#     confounder == "ebi-a-GCST004607" ~ "Plateletcrit",
+#     confounder == "ebi-a-GCST004626" ~ "Myeloid white cell count",
+#     confounder == "ukb-d-30080_irnt" ~ "Platelet count",
+#     confounder == "ieu-b-30" ~ "White blood cell count",
+#     confounder == "ebi-a-GCST005195" ~ "Coronary artery disease",
+#     confounder == "ebi-a-GCST004614" ~ "Granulocyte count",
+#     confounder == "ebi-a-GCST004620" ~ "Sum basophil neutrophil counts"
+#   )) %>%
+#   dplyr::arrange(Confounder) %>%
+#   dplyr::rename("GWAS ID" = "confounder",
+#                 "Outcome" = "outcome") %>%
+#   dplyr::mutate("Associated SNPs" = dplyr::case_when(
+#     Confounder == "BMI" ~ " ",
+#     Confounder == "Impedance of leg (right)"       ~ "rs10050092, rs12646525",
+#     Confounder == "Impedance of leg (left)"        ~ "rs10050092, rs12646525",
+#     Confounder == "Impedance of arm (right)"       ~ "rs10050092",
+#     Confounder == "Impedance of arm (left)"        ~ "rs10050092",
+#     Confounder == "Impedance of whole body"        ~ "rs10050092",
+#     Confounder == "Standing height"                ~ "rs10050092",
+#     Confounder == "Plateletcrit"                   ~ "rs66887589, ",
+#     Confounder == "Myeloid white cell count"       ~ "rs10050092, rs66887589",
+#     Confounder == "Platelet count"                 ~ "rs10050092",
+#     Confounder == "White blood cell count"         ~ "rs66887589",
+#     Confounder == "Coronary artery disease"        ~ "rs66887589, rs80223330",
+#     Confounder == "Granulocyte count"              ~ "rs66887589",
+#     Confounder == "Sum basophil neutrophil counts" ~ "rs66887589")
+#   ) %>%
+#   dplyr::relocate("Confounder", .after = "Outcome") %>%
+#   dplyr::relocate("GWAS ID",    .after = "Confounder") %>%
+#   dplyr::relocate("Associated SNPs", .after = "GWAS ID") %>%
+#   dplyr::mutate(OR = round(exp(beta_IVWcorrel), digits = 2)) %>%
+#   dplyr::mutate(SE = round(se_IVWcorrel.random, digits = 2)) %>%
+#   dplyr::mutate(`P-Value` = round(p_IVWcorrel.random, digits = 2)) %>%
+#   dplyr::select(-tidyselect::contains("IVWcorrel"), -n_snp, -F_stat, -exposure)
+# 
+# STable3 <- tab %>%
+#   flextable::flextable() %>%
+#   flextable::bold(bold = TRUE, part = "header") %>%
+#   flextable::align(align = c("center"), part = "all")
+# 
+# STable3
+# ```
+# 
+# ```{r, warning=FALSE, cache.comments=FALSE, message=FALSE}
+# or  <- read.table(paste0(pathResults,"MR_Results/MR_Results_DBP_scaled.txt"), header = TRUE) %>%
+#   dplyr::filter(outcome == "Lambert") %>%
+#   dplyr::mutate("Confounder" = "Main analysis") %>%
+#   dplyr::select("Confounder", "OR", "cilow", "cihigh")
+# 
+# tab <- read.table(paste0(pathResults,"TwoStepMR/twostepMR.txt"), header = TRUE) %>%
+#   dplyr::filter(outcome == "Lambert") %>%
+#   dplyr::distinct() %>%
+#   dplyr::relocate(outcome) %>%
+#   dplyr::mutate("Confounder" = dplyr::case_when(
+#     confounder == "ukb-b-19953" ~ "BMI",
+#     confounder == "ukb-b-7376"  ~ "Impedance of leg (right)",
+#     confounder == "ukb-b-14068" ~ "Impedance of leg (left)",
+#     confounder == "ukb-b-7859"  ~ "Impedance of arm (right)",
+#     confounder == "ukb-b-19379" ~ "Impedance of arm (left)",
+#     confounder == "ukb-b-19921" ~ "Impedance of whole body",
+#     confounder == "ukb-b-10787" ~ "Standing height",
+#     confounder == "ebi-a-GCST004607" ~ "Plateletcrit",
+#     confounder == "ebi-a-GCST004626" ~ "Myeloid white cell count",
+#     confounder == "ukb-d-30080_irnt" ~ "Platelet count",
+#     confounder == "ieu-b-30" ~ "White blood cell count",
+#     confounder == "ebi-a-GCST005195" ~ "Coronary artery disease",
+#     confounder == "ebi-a-GCST004614" ~ "Granulocyte count",
+#     confounder == "ebi-a-GCST004620" ~ "Sum basophil neutrophil counts"
+#   )) %>%
+#   dplyr::mutate(OR = exp(beta_IVWcorrel),
+#                 cilow  = exp(beta_IVWcorrel-1.96*se_IVWcorrel.random),
+#                 cihigh = exp(beta_IVWcorrel+1.96*se_IVWcorrel.random)) %>%
+#   dplyr::mutate(Confounder = factor(Confounder, labels = Confounder)) %>%
+#   dplyr::select("Confounder", "OR", "cilow", "cihigh") %>%
+#   dplyr::arrange(Confounder) %>%
+#   dplyr::mutate(n = dplyr::row_number()+1) %>%
+#   dplyr::union_all(or %>% dplyr::mutate(n = 1)) %>%
+#   dplyr::arrange(n)
+# 
+# # a <- c()
+# # for(i in 1:nrow(tab)){
+# #   a
+# # }
+# 
+# ggplot2::ggplot(data = tab, ggplot2::aes(x = OR, y = n)) +
+#   ggplot2::geom_point(
+#     ggplot2::aes(x = OR),
+#     shape = 15, size = 3
+#   ) +
+#   ggplot2::geom_errorbar(
+#     ggplot2::aes(xmin = cilow, xmax = cihigh),
+#     width = 0.5
+#   ) +
+#   ggplot2::geom_vline(
+#     xintercept = 1,
+#     linetype   = "dashed"
+#   ) +
+#   ggplot2::scale_y_discrete(
+#     breaks = tab$n,
+#     labels = c()
+#   )
 
 ```
