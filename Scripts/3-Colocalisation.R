@@ -9,6 +9,8 @@ gene_end   <- 120550146 # from ensembl
 exposure <- "DBP"
 outcome <- c("Lambert","Wightman","deRojas","Bellenguez")
 
+
+
 for(exposure_i in exposure){
   exp <- loadGwas(exposure_i, onlyInstruments = FALSE) %>%
     dplyr::filter(chr == 4, pos >= gene_start-window, pos <= gene_end+window)

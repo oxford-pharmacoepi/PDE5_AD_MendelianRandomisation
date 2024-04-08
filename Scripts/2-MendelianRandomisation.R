@@ -1,7 +1,12 @@
 
 exposure <- c("DBP")
-outcome  <- c("Lambert","Wightman","deRojas","Bellenguez")
+outcome  <- c("Lambert","Wightman","deRojas","Bellenguez","Kunkle")
 
+exposure <- c("new")
+outcome  <- c("new_Wightman","new_finngen")
+
+rm(harmonised)
+rm(MR_result)
 for(exposure_i in exposure){
   # ld matrix
   ld_mat <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix_",exposure_i,".txt"))
@@ -13,7 +18,7 @@ for(exposure_i in exposure){
     tidyr::separate(col = ".", into = c("SNP", "effect_allele","other_allele"), sep = "_")
   
   # Snp - exposure
-  exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt")) %>%
+  exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt"), header = TRUE) %>%
     dplyr::mutate(beta.exposure = -5.5*beta.exposure)
   
   for(outcome_i in outcome){
@@ -41,7 +46,6 @@ for(exposure_i in exposure){
       )
 
     dat <- TwoSampleMR::harmonise_ld_dat(dat_harmonised,ld_mat)
-    
     res <- TwoStepCisMR::IVWcorrel(betaYG  = dat$x$beta.outcome,
                                    sebetaYG = dat$x$se.outcome,
                                    betaXG   = dat$x$beta.exposure,
@@ -58,17 +62,21 @@ for(exposure_i in exposure){
                     "cihigh" = exp(beta+1.96*se))
     
     if(!"harmonised" %in% ls()){
-      harmonised <- dat$x %>%
-        dplyr::mutate("outcome" = outcome_i)
-      
+      # harmonised <- dat$x %>%
+      #   dplyr::mutate("outcome" = outcome_i) |>
+      #   dplyr::select("SNP", starts_with(c("effect","other","beta","se","eaf",
+      #                                      "chr","id","samplesize","pval")))
+      harmonised <- 1
       MR_result  <- res 
         
     }else{
-      harmonised <- harmonised %>%
-        dplyr::union_all(
-          dat$x %>%
-            dplyr::mutate("outcome" = outcome_i)
-        )
+      # harmonised <- harmonised %>%
+      #   dplyr::union_all(
+      #     dat$x %>%
+      #       dplyr::mutate("outcome" = outcome_i) |>
+      #       dplyr::select("SNP", starts_with(c("effect","other","beta","se","eaf",
+      #                                          "chr","id","samplesize","pval")))
+      #   )
 
       MR_result <- MR_result %>%
         dplyr::union_all(res)

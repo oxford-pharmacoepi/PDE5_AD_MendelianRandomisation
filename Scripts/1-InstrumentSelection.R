@@ -21,8 +21,7 @@ ld_mat <- TwoSampleMR::ld_matrix(snps$SNP)
 write.table(ld_mat,paste0(pathResults,"InstrumentSelection/ld_matrix_SBP.txt"))
 
 # Instruments from outcome -----------------------------------------------------
-outcome_i  <- c("Lambert","deRojas","Wightman","Bellenguez")
-
+outcome_i  <- c("Lambert","deRojas","Wightman","Bellenguez","Kunkle")
 for(outcome in outcome_i){
   gwas <- loadGwas(outcome, onlyInstruments = TRUE)
   print(gwas)

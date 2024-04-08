@@ -158,6 +158,30 @@ loadGwas <- function(gwas, onlyInstruments = TRUE, bellenguez = TRUE){
       return(gwas)
     },
     
+    "Kunkle" = {
+      gwas <- tibble::as_tibble(readr::read_table(paste0(pathData,"SummaryStatistics/AlzD_kunkle_2019/Kunkle_etal_Stage1_results.txt"))) |>
+        dplyr::select("SNP" = "MarkerName",
+                      "chr" = "Chromosome",
+                      "pos" = "Position",
+                      "effect_allele.outcome" = "Effect_allele",
+                      "other_allele.outcome"  = "Non_Effect_allele",
+                      "beta.outcome" = "Beta",
+                      "se.outcome" = "SE",
+                      "pval.outcome" = "Pvalue") |>
+        dplyr::mutate(id.outcome = "Kunkle",
+                      outcome = "Kunkle",
+                      samplesize.outcome = 63926)
+      if(onlyInstruments == TRUE){
+        gwas <- gwas %>%
+          dplyr::inner_join(tibble::tibble(
+            "SNP" = c("rs80223330","rs12646525","rs17355550","rs10050092","rs66887589"),
+            "pos" = c(120423094,120502461,120416096,120532085,120509279),
+            "eaf.outcome" = c(0.9674,0.1411,0.2154,0.5221,0.6616)),
+            by = c("SNP","pos")
+          )
+      }
+    },
+    
     "Bellenguez" = {
       gwas <- tibble::as_tibble(readr::read_table(paste0(pathData,'SummaryStatistics/AlzD_Bellenguez_2022/GCST90027158_buildGRCh38.tsv.gz'))) %>%
         dplyr::select(SNP = "variant_id",
@@ -176,7 +200,7 @@ loadGwas <- function(gwas, onlyInstruments = TRUE, bellenguez = TRUE){
       
       # Liftover  1200080:1250080
       # Prepare file for liftOver:
-      
+    
       if(bellenguez == TRUE){
       gwas <- gwas %>% dplyr::filter(chr == 4)
       

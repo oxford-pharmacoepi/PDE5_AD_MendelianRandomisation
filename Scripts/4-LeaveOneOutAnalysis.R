@@ -1,5 +1,5 @@
 exposure_i <- c("DBP")
-outcome  <- c("Lambert","Wightman","deRojas","Bellenguez")
+outcome  <- c("Lambert")
 
 # ld matrix
 ld_mat <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix_",exposure_i,".txt"))
@@ -11,8 +11,10 @@ pattern <- ld_mat %>%
   tidyr::separate(col = ".", into = c("SNP", "effect_allele","other_allele"), sep = "_")
 
 # Snp - exposure
-exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt"))
-
+exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt")) %>%
+  dplyr::mutate(beta.exposure = -5.5*beta.exposure) |>
+  dplyr::mutate(se.exposure = 5.5*se.exposure)
+rm("MR_result")
 for(outcome_i in outcome){
   # snp - outcome
   out <- readr::read_table(paste0(pathResults,"InstrumentSelection/iv_",outcome_i,".txt")) %>%
@@ -40,7 +42,7 @@ for(outcome_i in outcome){
     
     dat <- TwoSampleMR::harmonise_ld_dat(dat_harmonised,ld_mat)
     
-    for(i in pattern$SNP){
+    for(i in c(pattern$SNP,"All")){
     dat_loo <- dat$x %>%
       dplyr::filter(SNP != i)
     ld_loo  <- dat$ld[!colnames(dat$ld) == i,]
@@ -59,9 +61,10 @@ for(outcome_i in outcome){
       dplyr::mutate("outcome" = outcome_i,
                     "OR" = exp(beta),
                     "cilow" = exp(beta-1.96*se),
-                    "cihigh" = exp(beta+1.96*se))
+                    "cihigh" = exp(beta+1.96*se),
+                    "SNP" = i)
     
-    if(!"harmonised" %in% ls()){
+    if(!"MR_result" %in% ls()){
       MR_result  <- res 
       
     }else{
@@ -71,7 +74,7 @@ for(outcome_i in outcome){
   }
 }
 
-readr::write_delim(MR_result, paste0(pathResults,"MR_Results/LeaveOneOut_Results_",exposure_i,".txt"))
+readr::write_delim(MR_result, paste0(pathResults,"LeaveOneOutAnalysis/LeaveOneOut_Results_",exposure_i,".txt"))
 
 
 
