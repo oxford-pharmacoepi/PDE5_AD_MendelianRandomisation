@@ -1,5 +1,6 @@
 rm(list = ls())
-library("magrittr")
+library(magrittr)
+library(dplyr)
 
 pathData <- 'D:/Projects/PDE5_AD_MendelianRandomisation/'
 dir.create(paste0(pathData,"Results/"))
