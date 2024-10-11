@@ -2,9 +2,6 @@
 exposure <- c("DBP")
 outcome  <- c("Lambert","Wightman","deRojas","Bellenguez","Kunkle")
 
-exposure <- c("new")
-outcome  <- c("new_Wightman","new_finngen")
-
 rm(harmonised)
 rm(MR_result)
 for(exposure_i in exposure){

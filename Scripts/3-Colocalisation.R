@@ -7,7 +7,7 @@ gene_start <- 120415550
 gene_end   <- 120550146 # from ensembl
 
 exposure <- "DBP"
-outcome <- c("Lambert","Wightman","deRojas","Bellenguez")
+outcome <- c("Lambert")#,"Wightman","deRojas","Bellenguez")
 
 
 
@@ -98,3 +98,25 @@ for(exposure_i in exposure){
 }
 
 readr::write_delim(coloc_table, paste0(pathResults,"Colocalisation/colocalisation.txt"))
+
+
+# Create a plot
+table <- tibble(
+  pval = -log10(exp_list$pvalues),
+  pos = exp_list$pos,
+  type = "Diastolic blood pressure") |>
+  rbind(
+    tibble(
+      pval = -log10(out_list$pvalues),
+      pos = out_list$pos,
+      type = "Alzheimer's disease"
+    )
+  )
+
+p1 <- ggplot(table, aes(x = pos, y = pval)) +
+  geom_point(colour = "#6A99D0") +
+  facet_grid(rows = vars(type)) +
+  xlab("Position (Chromosome 4)") +
+  ylab(bquote(-log[10](PValue)))
+
+ggsave(p1, filename = paste0(pathResults,"Figures/Colocalisation_Lambert.png"),width = 20, height = 15, units = "cm", dpi = 600)

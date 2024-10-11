@@ -1,5 +1,4 @@
 exposure_i <- c("DBP")
-outcome  <- c("Lambert")
 
 # ld matrix
 ld_mat <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix_",exposure_i,".txt"))
@@ -15,7 +14,7 @@ exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_",exposure_i,".txt"
   dplyr::mutate(beta.exposure = -5.5*beta.exposure) |>
   dplyr::mutate(se.exposure = 5.5*se.exposure)
 rm("MR_result")
-for(outcome_i in outcome){
+for(outcome_i in c("Lambert","Wightman","deRojas","Bellenguez")){
   # snp - outcome
   out <- readr::read_table(paste0(pathResults,"InstrumentSelection/iv_",outcome_i,".txt")) %>%
     dplyr::inner_join(exp %>% dplyr::select("SNP"),
