@@ -36,7 +36,7 @@ source(here::here("Scripts/4-LeaveOneOutAnalysis.R"))
 
 # Sex-specific
 dir.create(paste0(pathResults,"SexSpecific"))
-source(here::here("Scripts/5-SexSpecifics.R"))
+source(here::here("Scripts/5-UKBiobank.R"))
 
 # Figures and tables from the article
 dir.create(paste0(pathResults,"TablesAndFigures"))

@@ -22,7 +22,7 @@ for(i in snps_exposure$SNP){
   # Select snp of interesta
   data <- ukb_data |>
     select("snp" = all_of(i), all_of(paste0(i,"_0")),"sex","age_when_assessment",
-           starts_with("PC"), "genetic_batch","ad_status",) |>
+           starts_with("PC"), "genetic_batch","ad_status") |>
     filter(!is.na(snp))
   
   data_males <- data |> filter(sex == 1)
