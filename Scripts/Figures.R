@@ -48,7 +48,7 @@ res <-
   mutate(variable = stringr::str_to_sentence(outcome)) |>
   mutate(outcome = if_else(row_number() == 1, "UK Biobank", "")) |>
   mutate(samplesize = c("220,352","262,037"),
-         cases = c("1,289 (0.58)","1,462 (0.56)")) |>
+         cases = c("1,722 (0.78)","2,030 (0.77)")) |>
   mutate(orci = paste0(round(OR,2)," (",round(cilow,2),", ", round(cihigh,2),")"),
          pval = round(pval, 2)) |>
   rename(mean = OR, lower = cilow, upper = cihigh)
@@ -60,7 +60,7 @@ res |>
              boxsize = 0.1,
              line.margin = 0.22,
              xlab = "Odds Ratio",
-             xticks = log(c(0.8, 0.9, 1, 1.2)),
+             xticks = c(.8,.9,1, 1.1, 1.2),
              graphwidth = unit(7, "cm"),
              graph.pos = 4) |>
   fp_add_lines(h_2 = gpar(lty = 1)) |>
@@ -68,7 +68,7 @@ res |>
                 cases = "Cases (%)",
                 orci = "OR (95% CI)",
                 pval = "P-Value") |>
-  fp_set_zebra_style("#F1F5F5","white") |>
+  forestplot::fp_set_zebra_style("#F1F5F5","white") |>
   fp_set_style(txt_gp = fpTxtGp(label = gpar(fontfamily = "Calibri", cex = 1),
                                 ticks = gpar(cex = 0.65),
                                 xlab = gpar(cex = 0.75),

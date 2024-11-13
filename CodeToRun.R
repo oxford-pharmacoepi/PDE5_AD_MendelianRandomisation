@@ -40,4 +40,4 @@ source(here::here("Scripts/5-UKBiobank.R"))
 
 # Figures and tables from the article
 dir.create(paste0(pathResults,"TablesAndFigures"))
-source(here::here("Scripts/TablesAndFigures."))
+source(here::here("Scripts/TablesAndFigures.R"))

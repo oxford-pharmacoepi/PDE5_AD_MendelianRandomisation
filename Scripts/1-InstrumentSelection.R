@@ -23,6 +23,25 @@ for(outcome in outcome_i){
 exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_DBP.txt"))
 out <- read.table(paste0(pathResults,"InstrumentSelection/iv_Lambert.txt"), header = TRUE)
 
-exp |>
+p <- exp |>
   inner_join(out, by = c("SNP", "chr","pos")) |>
+  as_tibble() |>
+  ggplot(aes(x = beta.exposure, y = beta.outcome, label = SNP,
+             ymin = beta.outcome - 1.96*se.outcome,
+             ymax = beta.outcome + 1.96*se.outcome,
+             xmin = beta.exposure - 1.96*se.outcome,
+             xmax = beta.exposure + 1.96*se.outcome)) +
+  geom_point(size = 2) +
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed", linewidth = 1, colour = "darkred") +
+  xlim(c(-0.2,0.2)) +
+  ylim(c(-0.2,0.2)) +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  xlab("Beta effect of the SNPs on the exposure") +
+  ylab("Beta effect of the SNPs on the outcome") +
+  theme_bw() +
+  geom_text(size = 4, hjust = c(0,0,0,0.5,0)-0.05, vjust = -c(0.5,0.5,0.5,0.5,0.75)) +
+  geom_errorbar()
+ggsave(paste0(pathResults, "InstrumentSelection/InstrumentsEffect.png"), dpi = 400)  
+  
   

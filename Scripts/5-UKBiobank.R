@@ -1,60 +1,8 @@
 # Load data
-ukb_data <- loadUkbData(pathUKB)
+snps_outcome <- as_tibble(read.delim(paste0(pathResults,"UK Biobank/iv_outcome.tsv")))
 
 # Extract instruments ----
 snps_exposure <- read.table(paste0(pathResults,"InstrumentSelection/iv_DBP.txt"))
-
-# Calculate SNPS-outcome interaction ----
-snp_outcome_males <- tibble(
-  "snp" = as.character(),
-  "effect_allele.outcome" = as.character(),
-  "other_allele,outcome"  = as.character(),
-  "samplesize.outcome" = as.numeric(),
-  "beta.outcome" = as.numeric(),
-  "se.outcome" = as.numeric(),
-  "eaf.outcome" = as.numeric(),
-  "pval.outcome" = as.numeric()
-)
-
-snp_outcome_females <- snp_outcome_males
-
-for(i in snps_exposure$SNP){
-  # Select snp of interesta
-  data <- ukb_data |>
-    select("snp" = all_of(i), all_of(paste0(i,"_0")),"sex","age_when_assessment",
-           starts_with("PC"), "genetic_batch","ad_status") |>
-    filter(!is.na(snp))
-  
-  data_males <- data |> filter(sex == 1)
-  
-  data_females <- data |> filter(sex == 0)
-  
-  regression_males <- glm(ad_status ~ snp + age_when_assessment + genetic_batch + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
-                          data = data_males,
-                          family = "binomial")
-  
-  regression_females <- glm(ad_status ~ snp + age_when_assessment + genetic_batch + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
-                            data = data_females,
-                            family = "binomial")
-  
-  regression_males <- coefficients(summary(regression_males))[row.names(coefficients(summary(regression_males))) == "snp",]
-  regression_females <- coefficients(summary(regression_females))[row.names(coefficients(summary(regression_females))) == "snp",]
-  
-  snp_outcome_males <- snp_outcome_males |>
-    rbind(loadSnpOutcomeResults(i, data = data_males, regression = regression_males))
-  snp_outcome_females <- snp_outcome_females |>
-    rbind(loadSnpOutcomeResults(i, data = data_females, regression = regression_females))
-}
-
-
-write.csv(snp_outcome_males |>
-            mutate(type = "males") |>
-            rbind(
-              snp_outcome_females  |>
-                mutate(type = "females")),
-          paste0(pathResults,"SexSpecific/iv_outcome.txt"), row.names = FALSE)
-
-
 
 # Calculate MR estimates ----
 ld_mat <- read.table(paste0(pathResults,"InstrumentSelection/ld_matrix_dbp.txt"))
@@ -71,7 +19,7 @@ exp <- read.table(paste0(pathResults,"InstrumentSelection/iv_dbp.txt"), header =
 
 for(outcome_i in c("males","females")){
   # snp - outcome
-  out <- read.csv(paste0(pathResults,"SexSpecific/iv_outcome.txt")) |> 
+  out <- snps_outcome |> 
     filter(type == outcome_i) |>
     mutate(other_allele.outcome = c("T","G","T","T","T"), id.outcome = outcome_i, outcome = outcome_i) |>
     rename("SNP" = "snp")

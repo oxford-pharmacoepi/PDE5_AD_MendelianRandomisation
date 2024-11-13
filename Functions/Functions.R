@@ -270,7 +270,6 @@ loadUkbData <- function(pathUKB){
            "date_of_dementia_report"  = "f.42018.0.0",
            "date_of_alzheimer_report" = "f.42020.0.0",
            "date_of_vascular_dementia_report" = "f.42022.0.0",
-           "date_of_alzheimer_report" = "f.42020.0.0",
            "date_of_frontotemporal_dementia_report" = "f.42024.0.0",
            "ethnic_background" = "f.21000.0.0",
            "body_mass_index" = "f.21001.0.0",
